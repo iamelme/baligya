@@ -4,7 +4,7 @@ import Button from '@renderer/shared/components/ui/Button'
 import Input from '@renderer/shared/components/ui/Input'
 import Price from '@renderer/shared/components/ui/Price'
 import useBoundStore from '@renderer/shared/stores//boundStore'
-import { ReactNode, useCallback, useRef, useState } from 'react'
+import { FormEvent, ReactNode, useEffect, useRef, useState } from 'react'
 import { Trash2 } from 'react-feather'
 import { NumericFormat } from 'react-number-format'
 import CartItems from '../components/CartItems'
@@ -43,6 +43,8 @@ export default function POS(): ReactNode {
   const [amount, setAmount] = useState(0)
   const [paymentMethod, setPaymentMethod] = useState('cash')
 
+  const isFirstRender = useRef(true);
+
   const user = useBoundStore((state) => state.user)
 
   const { data, isPending, error } = useCart(user?.id)
@@ -57,10 +59,18 @@ export default function POS(): ReactNode {
     inputRefCustName
   })
 
+  const debounceValue = useDebounce(String(discount))
+
   const mutationUpdateDiscount = useDiscount({ id: data?.id, total: data?.total || 0 })
 
   useEffect(() => {
+
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
     mutationUpdateDiscount.mutate(Number(debounceValue))
+
   }, [debounceValue])
 
   const mutationUpdateItemQty = useUpdateItemQty({ id: data?.id, btnUpdateQtyRef })
@@ -74,7 +84,7 @@ export default function POS(): ReactNode {
     onRemoveCart: data?.items?.length === 1 ? () => mutationRemoveCart.mutate() : undefined
   })
 
-  const handleSubmit = async (e): Promise<void> => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault()
     if (inputRef.current && data?.id && user.id && inputRef.current.value) {
       mutationInsert.mutate(Number(inputRef.current.value))
