@@ -6,7 +6,7 @@ import {
   Direction,
   TopItemsType
 } from '../interfaces/ISaleRepository'
-import { ErrorType, PlaceOrderType, SaleType } from '../shared/utils/types'
+import { ErrorType, PlaceOrderType, ReturnSaleType, SaleType } from '../shared/utils/types'
 import { ipcMain } from 'electron'
 
 export class SaleRepository implements ISaleRepository {
@@ -41,7 +41,7 @@ export class SaleRepository implements ISaleRepository {
     )
     ipcMain.handle('sale:insertItem', (_, params: SaleItem) => this.insertItem(params))
     ipcMain.handle('sale:placeOrder', (_, params: PlaceOrderType) => this.placeOrder(params))
-    ipcMain.handle('sale:updateStatus', (_, params: { id: number; status: string }) =>
+    ipcMain.handle('sale:updateStatus', (_, params: { id: number; status: SaleType['status'] }) =>
       this.updateStatus(params)
     )
     ipcMain.handle('sale:deleteAllItems', (_, sale_id: number) => this.deleteAllItems(sale_id))
@@ -439,18 +439,18 @@ export class SaleRepository implements ISaleRepository {
 
   create(user_id: number): ReturnType {
     const createdAt = new Date().toISOString()
+    const db = this._database
     try {
-      const stmt = this._database.prepare(`
+
+      const stmt = db.prepare(`
         INSERT INTO sales (created_at, status, user_id)
         VALUES(?, ?, ?)
         RETURNING id
         `)
 
-      const sale = stmt.get(createdAt, 'in-progress', user_id)
+      const sale = stmt.get(createdAt, 'in-progress', user_id) as ReturnSaleType
 
-      console.log('returning sale', sale)
-
-      if (!sale) {
+      if (!sale.id) {
         throw new Error('Something went wrong while creating a sale')
       }
 
@@ -459,7 +459,6 @@ export class SaleRepository implements ISaleRepository {
         error: ''
       }
     } catch (error) {
-      console.log('inside catch', error)
       if (error instanceof Error) {
         return {
           data: null,
@@ -476,8 +475,62 @@ export class SaleRepository implements ISaleRepository {
   placeOrder(params: PlaceOrderType): { success: boolean; error: Error | string } {
     const { cart, amount, reference_number, method, user_id, customer_name } = params
     const createdAt = new Date().toISOString()
+    const db = this._database
+
+
     try {
-      const transaction = this._database.transaction(() => {
+      const stmtSale =
+        db.prepare(
+          `
+          UPDATE sales
+          SET status = ?,
+          invoice_number = ?,
+          sub_total = ?,
+          discount = ?,
+          vatable_sales = ?,
+          vat_amount = ?,
+          total = ?,
+          customer_name = ?
+          WHERE id = ?
+          `
+        )
+
+
+      const saleItemsStmt = db.prepare(`
+            INSERT INTO
+              sale_items
+              (created_at, quantity, unit_price, unit_cost, line_total, sale_id, product_id, user_id)
+            VALUES(?, ?, ?, ?, ?, ?, ?, ?)
+            `)
+
+
+      const invStmt = db.prepare(
+        `
+            UPDATE inventory
+            SET quantity = quantity - ?
+            WHERE product_id = ?
+            `
+      )
+
+      const invMovStmt = db.prepare(
+        `INSERT INTO
+          inventory_movement
+          (created_at, movement_type, reference_type, quantity, reference_id, product_id, user_id)
+          VALUES(?, ?, ?, ?, ?, ?, ?)
+          `
+      )
+
+      const paymentStmt =
+        db.prepare(
+          `
+          INSERT INTO
+            payments
+            (created_at, amount, reference_number, method, sale_id)
+          VALUES(?, ?, ?, ?, ?)
+          `
+        )
+
+      const transaction = db.transaction(() => {
         console.log('place order start', params)
 
         const saleId = this.create(user_id).data?.id
@@ -488,91 +541,51 @@ export class SaleRepository implements ISaleRepository {
 
         const invoiceNo = String(saleId).padStart(8, '0')
 
-        this._database
-          .prepare(
-            `
-          UPDATE sales
-          SET status = ?,
-          invoice_number = ?,
-          sub_total = ?,
-          discount = ?,
-          total = ?,
-          customer_name = ?
-          WHERE id = ?
-          `
-          )
+        stmtSale
           .run(
             'complete',
             invoiceNo,
             cart.sub_total,
             cart.discount,
+            cart.vatable_sales,
+            cart.vat_amount,
             cart.total,
             customer_name,
             saleId
           )
 
-        // console.log('cart items', cart.items)
 
-        try {
-          const saleItemsStmt = this._database.prepare(`
-            INSERT INTO sale_items (created_at, quantity, unit_price, unit_cost, line_total, sale_id, product_id, user_id)
-            VALUES(?, ?, ?, ?, ?, ?, ?, ?)
-            `)
+        for (const item of cart.items) {
+          const line_total = item.quantity * item.price
 
-          const invStmt = this._database.prepare(
-            `
-            UPDATE inventory
-            SET quantity = quantity - ?
-            WHERE product_id = ?
-            `
+          saleItemsStmt.run(
+            createdAt,
+            item.quantity,
+            item.price,
+            item.cost,
+            line_total,
+            saleId,
+            item.product_id,
+            item.user_id
           )
 
-          const invMovStmt = this._database.prepare(
-            `INSERT INTO inventory_movement (created_at, movement_type, reference_type, quantity, reference_id, product_id, user_id)
-          VALUES(?, ?, ?, ?, ?, ?, ?)
-          `
+          invStmt.run(item.quantity, item.product_id)
+          invMovStmt.run(
+            createdAt,
+            1,
+            'sales',
+            item.quantity * -1,
+            saleId,
+            item.product_id,
+            item.user_id
           )
-          for (const item of cart.items) {
-            const line_total = item.quantity * item.price
-
-            saleItemsStmt.run(
-              createdAt,
-              item.quantity,
-              item.price,
-              item.cost,
-              line_total,
-              saleId,
-              item.product_id,
-              item.user_id
-            )
-
-            invStmt.run(item.quantity, item.product_id)
-            invMovStmt.run(
-              createdAt,
-              1,
-              'sales',
-              item.quantity,
-              saleId,
-              item.product_id,
-              item.user_id
-            )
-          }
-        } catch (error) {
-          console.error(error)
         }
 
         console.log('after loop')
 
         const normalizeAmount = amount * 100
 
-        this._database
-          .prepare(
-            `
-          INSERT INTO payments (created_at, amount, reference_number, method, sale_id)
-          VALUES(?, ?, ?, ?, ?)
-          `
-          )
-          .run(createdAt, normalizeAmount, reference_number, method, saleId)
+        paymentStmt.run(createdAt, normalizeAmount, reference_number, method, saleId)
 
         return true
       })
@@ -590,6 +603,7 @@ export class SaleRepository implements ISaleRepository {
         error: ''
       }
     } catch (error) {
+      console.log(error)
       if (error instanceof Error) {
         return {
           success: false,
@@ -733,7 +747,7 @@ export class SaleRepository implements ISaleRepository {
     }
   }
 
-  updateStatus(params: { id: number; status: string }): { success: boolean; error: ErrorType } {
+  updateStatus(params: { id: number; status: SaleType['status'] }): { success: boolean; error: ErrorType } {
     const { id, status } = params
     try {
       const db = this._database
@@ -760,22 +774,31 @@ export class SaleRepository implements ISaleRepository {
 
         const isVoid = status === 'void'
 
-        if (status !== 'in-progress') {
-          for (let i = 0; i < items.length; i++) {
-            const item = items[i]
+        let referenceType
 
-            const resItem = this._inventory.update({
-              quantity: isVoid ? item.old_quantity + item.quantity : item.quantity,
-              id: item.inventory_id,
-              product_id: item.product_id,
-              user_id: item.user_id,
-              movement_type: isVoid ? 0 : 1,
-              reference_type: isVoid ? 'void' : 'adjustment'
-            })
+        switch (status) {
+          case 'return':
+            referenceType = 'return'
+            break;
+          default:
+            referenceType = 'adjustments'
+            break;
+        }
 
-            if (!resItem) {
-              throw new Error('Something went wrong while updating the sale')
-            }
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i]
+
+          const resItem = this._inventory.update({
+            quantity: isVoid ? item.quantity : item.quantity * -1,
+            id: item.inventory_id,
+            product_id: item.product_id,
+            user_id: item.user_id,
+            movement_type: isVoid ? 0 : 1,
+            reference_type: referenceType
+          })
+
+          if (!resItem) {
+            throw new Error('Something went wrong while updating the sale')
           }
         }
 

@@ -50,7 +50,7 @@ export default function Detail(): ReactNode {
 
   const mutationUpdateStatus = useMutation({
     mutationFn: async (status: string) => {
-      if (!Number(id) && status === 'void') {
+      if (!Number(id) && status === 'voided') {
         return
       }
       const { success, error } = await window.apiSale.updateSaleStatus({ id: Number(id), status })

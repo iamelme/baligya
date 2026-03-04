@@ -42,7 +42,7 @@ export class AppDatabase {
               user_name TEXT NOT NULL,
               password TEXT NOT NULL
             );
-            
+
             CREATE TABLE IF NOT EXISTS categories(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -73,13 +73,14 @@ export class AppDatabase {
               invoice_number TEXT,
               sub_total INTEGER DEFAULT 0,
               discount INTEGER DEFAULT 0,
-              tax INTEGER DEFAULT 0,
               total INTEGER DEFAULT 0,
+              vatable_sales INTEGER DEFAULT 0,
+              vat_amount INTEGER DEFAULT 0,
+              tax INTEGER DEFAULT 0,
               customer_name TEXT,
               status TEXT, -- in-progress, completed, refunded, voided
               user_id INTEGER,
-              FOREIGN KEY (user_id) REFERENCES users(id),
-              FOREIGN KEY (status) REFERENCES sale_statuses(key)
+              FOREIGN KEY (user_id) REFERENCES users(id)
             );
 
             CREATE TABLE IF NOT EXISTS sale_statuses(
@@ -134,23 +135,9 @@ export class AppDatabase {
               reference_number TEXT,
               method TEXT, --- CASH, CARD, E-WALLET
               sale_id INTEGER,
-              FOREIGN KEY (sale_id) REFERENCES sales(id),
-              FOREIGN KEY (method) REFERENCES payment_methods(key)
+              FOREIGN KEY (sale_id) REFERENCES sales(id)
             );
 
-            CREATE TABLE IF NOT EXISTS payment_methods(
-              key PRIMARY KEY,
-              name TEXT UNIQUE
-            );
-
-            CREATE TABLE IF NOT EXISTS counts(
-                products INTEGER DEFAULT 0,
-                categories INTEGER DEFAULT 0
-            );
-
-            INSERT INTO counts (products, categories) 
-            SELECT 0, 0
-            WHERE NOT EXISTS (SELECT 1 FROM counts);
 
             CREATE TABLE IF NOT EXISTS inventory(
               id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -160,7 +147,7 @@ export class AppDatabase {
               product_id INTEGER,
               FOREIGN KEY (product_id) REFERENCES products(id)
             );
-            
+
             CREATE TABLE IF NOT EXISTS inventory_movement(
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -173,7 +160,7 @@ export class AppDatabase {
               FOREIGN KEY (user_id) REFERENCES users(id),
               FOREIGN KEY (product_id) REFERENCES products(id)
             );
-            
+
             CREATE VIRTUAL TABLE IF NOT EXISTS products_fts USING fts5(product_id, name, sku, code);
 
             CREATE TABLE IF NOT EXISTS carts(

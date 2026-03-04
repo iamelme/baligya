@@ -28,6 +28,10 @@ export default defineConfig({
         '@renderer': resolve('src/renderer/src')
       }
     },
+    esbuild: {
+      // pure: ['console.log'],
+      // drop: ["console", "debugger"],
+    },
     build: {
       rollupOptions: {
         external: ['better-sqlite3']
