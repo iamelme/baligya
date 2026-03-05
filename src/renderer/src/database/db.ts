@@ -15,7 +15,7 @@ export class AppDatabase {
   db: DatabaseType;
 
   constructor() {
-    const dbPath = join(app.getPath("userData"), "kiosk.sqlite");
+    const dbPath = join(app.getPath("userData"), "baligya.sqlite");
     console.log("dbpath", dbPath);
 
     this.db = new Database(dbPath);
