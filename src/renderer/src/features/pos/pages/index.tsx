@@ -195,7 +195,7 @@ export default function POS(): ReactNode {
             data={data}
             onChangeDiscount={(v) => {
               // console.log('on change summary', v)
-              setDiscount(v)
+              setDiscount(v);
             }}
           >
             <Summary.NoOfItems />
@@ -218,7 +218,9 @@ export default function POS(): ReactNode {
           <h3 className="mb-2 font-bold">Payment</h3>
 
           <div className="mb-3">
-            <label htmlFor="method" className="block mb-1">Method</label>
+            <label htmlFor="method" className="block mb-1">
+              Method
+            </label>
             <select
               id="method"
               onChange={(e) => setPaymentMethod(e.target.value)}
@@ -229,7 +231,7 @@ export default function POS(): ReactNode {
               <option value="cash">Cash</option>
             </select>
 
-            {paymentMethod !== 'cash' && (
+            {paymentMethod !== "cash" && (
               <div className="my-3">
                 <label htmlFor="refNo">Reference No.</label>
                 <Input ref={inputRefNoRef} id="refNo" />
@@ -243,15 +245,15 @@ export default function POS(): ReactNode {
             <NumericFormat
               getInputRef={inputAmountRef}
               onValueChange={(values) => {
-                const { floatValue } = values
+                const { floatValue } = values;
 
                 if (floatValue === undefined) {
-                  setAmount(0)
-                  return
+                  setAmount(0);
+                  return;
                 }
 
                 if (floatValue > -1) {
-                  setAmount(floatValue)
+                  setAmount(floatValue);
                 }
               }}
               value={amount}
@@ -287,5 +289,5 @@ export default function POS(): ReactNode {
         </div>
       </aside>
     </div>
-  )
+  );
 }
