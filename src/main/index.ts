@@ -7,6 +7,7 @@ import {
   dialog,
   protocol,
   net,
+  nativeImage,
 } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
@@ -24,6 +25,7 @@ import createPDF from "./createInvoicePDF";
 import { ReturnSaleType } from "../renderer/src/shared/utils/types";
 import { hashPassword } from "./hashPassword";
 import verifyPassword from "./verifyPassword";
+import initializeLogo from "./initializeLogo";
 
 function createWindow(): void {
   // Create the browser window.
@@ -67,6 +69,9 @@ protocol.registerSchemesAsPrivileged([
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   // Set app user model id for windows
+
+  initializeLogo();
+
   // protocol.handle(protocolName, (request: Request) => {
   protocol.handle(protocolName, (request: Request) => {
     // const userDataPath = app.getPath('userData')
