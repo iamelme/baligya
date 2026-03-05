@@ -13,3 +13,7 @@ This system includes:
 * 🔄 Returns & Refund Handling
 
 * 📈 Inventory Movement Tracking
+
+
+
+This software is provided "as is", without warranty of any kind.
