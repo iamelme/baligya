@@ -17,7 +17,7 @@ export default function Input({ className, ...props }: InputProps): React.JSX.El
     <input
       {...props}
       className={twMerge(
-        `${base}  border border-slate-300  ${className}`
+        `${base}  border border-slate-300 ${props.disabled ? "bg-slate-50 text-slate-300" : ""} ${className}`
       )}
     />
   )

@@ -1,82 +1,93 @@
-import Items from '@renderer/shared/components/Items'
-import Alert from '@renderer/shared/components/ui/Alert'
-import Button from '@renderer/shared/components/ui/Button'
-import Price from '@renderer/shared/components/ui/Price'
-import { humanize, saleStatuses } from '@renderer/shared/utils'
-import { ReturnItemType, SettingsType } from '@renderer/shared/utils/types'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ReactNode, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import useBoundStore from '@renderer/shared/stores//boundStore'
-import Return from '../components/Return'
+import Items from "@renderer/shared/components/Items";
+import Alert from "@renderer/shared/components/ui/Alert";
+import Button from "@renderer/shared/components/ui/Button";
+import Price from "@renderer/shared/components/ui/Price";
+import { downloadblePDF, humanize, saleStatuses } from "@renderer/shared/utils";
+import { ReturnItemType, SettingsType } from "@renderer/shared/utils/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ReactNode, useRef, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import useBoundStore from "@renderer/shared/stores//boundStore";
+import Return from "../components/Return";
 const headers = [
-  { label: 'Name', className: '' },
-  { label: 'Quantity', className: 'text-right' },
-  { label: 'Unit Cost', className: 'text-right' },
-  { label: 'Unit Price', className: 'text-right' },
-  { label: 'Total', className: 'text-right' }
-]
+  { label: "Name", className: "" },
+  { label: "Quantity", className: "text-right" },
+  { label: "Unit Cost", className: "text-right" },
+  { label: "Unit Price", className: "text-right" },
+  { label: "Total", className: "text-right" },
+];
 
 export default function Detail(): ReactNode {
-  const { id } = useParams()
+  const { id } = useParams();
 
-  const user = useBoundStore((state) => state.user)
+  const user = useBoundStore((state) => state.user);
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
-  const refReturnBtn = useRef<HTMLButtonElement | null>(null)
+  const refReturnBtn = useRef<HTMLButtonElement | null>(null);
 
   const [selectedItems, setSelectedItems] = useState<
     Map<string, { isChecked: boolean; price: number; newQty: number }>
-  >(new Map())
+  >(new Map());
 
   const { data, isPending, error } = useQuery({
-    queryKey: [id, 'sales-detail'],
+    queryKey: [id, "sales-detail"],
     queryFn: async () => {
       if (!Number(id)) {
-        throw new Error('No invoice found')
+        throw new Error("No invoice found");
       }
-      const { data, error } = await window.apiSale.getById(Number(id))
+      const { data, error } = await window.apiSale.getById(Number(id));
 
       if (error instanceof Error) {
-        throw new Error(error.message)
+        throw new Error(error.message);
       }
 
-      return data
-    }
-  })
+      return data;
+    },
+  });
 
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   const mutationUpdateStatus = useMutation({
     mutationFn: async (status: string) => {
-      if (!Number(id) && status === 'void') {
-        return
+      if (!Number(id) && status === "voided") {
+        return;
       }
-      const { success, error } = await window.apiSale.updateSaleStatus({ id: Number(id), status })
+      const { success, error } = await window.apiSale.updateSaleStatus({
+        id: Number(id),
+        status,
+      });
       if (error instanceof Error) {
-        throw new Error(error.message)
+        throw new Error(error.message);
       }
 
-      return success
+      return success;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [id] })
-    }
-  })
+      queryClient.invalidateQueries({ queryKey: [id] });
+    },
+  });
 
   const mutationReturn = useMutation({
     mutationFn: async () => {
       if (!id || !user.id || !data || !data?.items) {
-        throw new Error('Something went wrong!')
+        throw new Error("Something went wrong!");
       }
-      const items: Array<Omit<ReturnItemType, 'id' | 'created_at' | 'return_id'>> = []
+      const items: Array<
+        Omit<ReturnItemType, "id" | "created_at" | "return_id">
+      > = [];
       for (const [key, value] of selectedItems) {
-        const found = data.items.find((i) => i.id === Number(key))
-        console.log({ found })
+        const found = data.items.find((i) => i.id === Number(key));
+        console.log({ found });
 
-        if (!found || found.available_qty < 1 || found.return_qty >= found.quantity) {
-          throw new Error('Something went wrong while trying to process a return')
+        if (
+          !found ||
+          found.available_qty < 1 ||
+          found.return_qty >= found.quantity
+        ) {
+          throw new Error(
+            "Something went wrong while trying to process a return",
+          );
         }
 
         items.push({
@@ -88,10 +99,10 @@ export default function Detail(): ReactNode {
           available_qty: found.available_qty,
           user_id: user.id,
           sale_id: Number(id),
-          sale_item_id: Number(key)
-        })
+          sale_item_id: Number(key),
+        });
       }
-      console.log('submitted items', items)
+      console.log("submitted items", items);
 
       const payload = {
         sale_id: Number(id),
@@ -99,145 +110,158 @@ export default function Detail(): ReactNode {
         items,
         refund_amount: items.reduce(
           (acc, cur) => (acc += cur.refund_price * (cur.quantity ?? 0)),
-          0
-        )
-      }
-      const { error } = await window.apiReturn.create(payload)
+          0,
+        ),
+      };
+      const { error } = await window.apiReturn.create(payload);
 
       if (error instanceof Error) {
-        throw new Error(error.message)
+        throw new Error(error.message);
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [id, 'sales-detail'] })
+      queryClient.invalidateQueries({ queryKey: [id, "sales-detail"] });
       if (refReturnBtn?.current) {
-        refReturnBtn?.current.click()
-        setSelectedItems(new Map())
+        refReturnBtn?.current.click();
+        setSelectedItems(new Map());
       }
-    }
-  })
+    },
+  });
 
   const handleToggleAll = (e): void => {
-    console.log({ checked: e.target.checked })
+    console.log({ checked: e.target.checked });
 
-    const { checked } = e.target
+    const { checked } = e.target;
 
     if (data) {
       if (checked) {
         const ids = data?.items.reduce((acc, cur) => {
           acc[cur.id] = {
             isChecked: e.target.checked,
-            price: data?.items?.find((item) => item.id === cur.id)?.unit_price ?? 0,
-            newQty: data?.items?.find((item) => item.id === cur.id)?.quantity ?? 0
-          }
+            price:
+              data?.items?.find((item) => item.id === cur.id)?.unit_price ?? 0,
+            newQty:
+              data?.items?.find((item) => item.id === cur.id)?.quantity ?? 0,
+          };
 
-          return acc
-        }, {})
-        setSelectedItems(new Map(Object.entries(ids)))
-        return
+          return acc;
+        }, {});
+        setSelectedItems(new Map(Object.entries(ids)));
+        return;
       }
 
-      setSelectedItems(new Map())
+      setSelectedItems(new Map());
     }
-  }
+  };
 
   const handleToggleSelect = (id) => (e) => {
-    console.log({ id, checked: e.target.checked })
-    const { checked } = e.target
+    console.log({ id, checked: e.target.checked });
+    const { checked } = e.target;
 
-    const items = new Map(selectedItems)
+    const items = new Map(selectedItems);
 
     checked
       ? items.set(`${id}`, {
-        isChecked: true,
-        price: data?.items?.find((item) => item.id === id)?.unit_price ?? 0,
-        newQty: data?.items?.find((item) => item.id === id)?.quantity ?? 0
-      })
-      : items.delete(`${id}`)
-    console.log(items.size)
+          isChecked: true,
+          price: data?.items?.find((item) => item.id === id)?.unit_price ?? 0,
+          newQty: data?.items?.find((item) => item.id === id)?.quantity ?? 0,
+        })
+      : items.delete(`${id}`);
+    console.log(items.size);
 
     if (items.size === data?.items.length && data?.items.length > 0) {
       if (!checked) {
-        setSelectedItems(new Map())
-        return
+        setSelectedItems(new Map());
+        return;
       }
       const ids = data?.items.reduce((acc, cur) => {
         acc[cur.id] = {
           isChecked: true,
-          price: data?.items?.find((item) => item.id === cur.id)?.unit_price ?? 0,
-          newQty: items.get(`${cur.id}`)?.newQty || cur.quantity
-        }
+          price:
+            data?.items?.find((item) => item.id === cur.id)?.unit_price ?? 0,
+          newQty: items.get(`${cur.id}`)?.newQty || cur.quantity,
+        };
 
-        return acc
-      }, {})
-      setSelectedItems(new Map(Object.entries(ids)))
-      return
+        return acc;
+      }, {});
+      setSelectedItems(new Map(Object.entries(ids)));
+      return;
     }
 
-    setSelectedItems(items)
-  }
+    setSelectedItems(items);
+  };
 
   if (isPending) {
-    return <>Loading...</>
+    return <>Loading...</>;
   }
 
   if (error) {
-    return <Alert variant="danger">{error.message}</Alert>
+    return <Alert variant="danger">{error.message}</Alert>;
   }
 
   if (!data) {
-    return <Alert variant="danger">No Details for this Sales Invoice</Alert>
+    return <Alert variant="danger">No Details for this Sales Invoice</Alert>;
   }
-  console.log('data', data)
+  console.log("data", data);
 
+  const settings: SettingsType | undefined = queryClient.getQueryData([
+    "settings",
+  ]);
   const handleDownloadPDF = async (): Promise<void> => {
     try {
-      const settings: SettingsType | undefined = queryClient.getQueryData(['settings'])
-      console.log('Cached user data:', settings, settings?.logo)
+      console.log("Cached user data:", settings, settings?.logo);
 
       const res = await window.apiElectron.createPDF({
         ...data,
-        logo: settings?.logo as string
-      })
+        logo: settings?.logo as string,
+      });
 
-      const pdf = new Blob([res], { type: 'application/pdf' })
-
-      console.log(pdf)
-
-      const url = URL.createObjectURL(pdf)
-
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `${data.invoice_number}`
-
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      downloadblePDF({ res, invoiceNumber: data?.invoice_number });
 
       // console.log('convert blob', new Blob([res], { type: 'application/pdf' }))
 
       // console.log('res', res)
     } catch (error) {
-      console.error(error)
+      console.error(error);
     }
-  }
+  };
 
-  console.log('selectedItems', selectedItems)
+  const handlePrintPDF = async (): Promise<void> => {
+    try {
+      const res = await window.apiElectron.createPDF({
+        ...data,
+        logo: settings?.logo as string,
+      });
+
+      await window.apiElectron.printPDF(res);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  console.log("selectedItems", selectedItems);
 
   return (
     <>
       <div className="flex justify-between">
         <div>
-          <Button variant='outline' size="sm" onClick={() => navigate(-1)}>Go Back</Button>
+          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+            Go Back
+          </Button>
         </div>
         <div className="text-right">
           <div className="flex justify-end gap-x-2">
+            <div>
+              <Button variant="outline" size="sm" onClick={handlePrintPDF}>
+                Print PDF
+              </Button>
+            </div>
             <div>
               <Button variant="outline" size="sm" onClick={handleDownloadPDF}>
                 Download PDF
               </Button>
             </div>
-            {data?.status !== 'void' && (
+            {data?.status !== "void" && (
               <Return
                 ref={refReturnBtn}
                 items={data.items}
@@ -262,7 +286,7 @@ export default function Detail(): ReactNode {
               </Alert>
             )}
             <select
-              disabled={data.status === 'void'}
+              disabled={data.status === "void"}
               defaultValue={data.status}
               onChange={(e) => mutationUpdateStatus.mutate(e.target.value)}
             >
@@ -275,6 +299,13 @@ export default function Detail(): ReactNode {
           </p>
         </div>
       </div>
+      {data?.customer_name && (
+        <div className="mb-3">
+          <h3 className="font-medium mb-1">Bill To</h3>
+          <p>{data.customer_name}</p>
+          <address></address>
+        </div>
+      )}
       {data?.items && (
         <>
           <h3 className="font-medium mb-2">Line Items</h3>
@@ -322,6 +353,18 @@ export default function Detail(): ReactNode {
               <Price value={data?.discount} />)
             </dd>
           </dl>
+          <dl className="flex justify-between gap-x-4">
+            <dt className="">Vat Sales:</dt>
+            <dd>
+              <Price value={data?.vatable_sales} />
+            </dd>
+          </dl>
+          <dl className="flex justify-between gap-x-4">
+            <dt className="">12% VAT:</dt>
+            <dd>
+              <Price value={data?.vat_amount} />
+            </dd>
+          </dl>
           <dl className="flex justify-between gap-x-4 font-bold">
             <dt className="">Total:</dt>
             <dd>
@@ -348,5 +391,5 @@ export default function Detail(): ReactNode {
         </div>
       </div>
     </>
-  )
+  );
 }

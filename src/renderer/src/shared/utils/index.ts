@@ -81,3 +81,21 @@ export function getCurrentQuarterDates(): { start: Date, end: Date, months: stri
     months,
   };
 }
+
+
+export function downloadblePDF({ res, invoiceNumber }: { res: ArrayBuffer, invoiceNumber: string }) {
+
+  const pdf = new Blob([res], { type: "application/pdf" });
+
+  console.log(pdf);
+
+  const url = URL.createObjectURL(pdf);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${invoiceNumber}`;
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}

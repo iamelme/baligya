@@ -36,6 +36,7 @@ export class InventoryRepository implements IInventoryRepository {
          FROM inventory i
          LEFT JOIN products p ON i.product_id = p.id
           WHERE  i.id > ?
+            AND p.is_active = 1
          LIMIT ?
       `
 
@@ -201,7 +202,7 @@ export class InventoryRepository implements IInventoryRepository {
     try {
       const inventory = db.prepare(
         `UPDATE inventory
-          SET quantity = ?
+          SET quantity = quantity + ?
           WHERE id = ?`
       )
       const insertInvMv = db.prepare(
@@ -210,6 +211,7 @@ export class InventoryRepository implements IInventoryRepository {
         `
       )
       const transaction = db.transaction(() => {
+
         const res = inventory.run(quantity, id)
 
         if (!res.changes) {

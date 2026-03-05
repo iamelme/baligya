@@ -30,8 +30,8 @@ export default defineConfig({
       }
     },
     esbuild: {
-      pure: ['console.log'],
-      drop: ["console", "debugger"],
+      // pure: ['console.log'],
+      // drop: ["console", "debugger"],
     },
     build: {
       rollupOptions: {

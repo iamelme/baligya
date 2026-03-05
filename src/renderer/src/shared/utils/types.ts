@@ -44,7 +44,7 @@ export type InventoryType = {
   product_id: number
   user_id: number
   movement_type?: number,
-  reference_type?: 'purchase' | 'sale' | 'return' | 'transfer' | 'adjustment' | 'void'
+  reference_type?: 'purchase' | 'sale' | 'return' | 'transfer' | 'adjustment' | 'void' | 'initial_stock'
 }
 
 export type CartType = {
@@ -87,7 +87,7 @@ export type SaleType = {
   tax: number
   discount: number
   total: number
-  status: 'completed' | 'refunded' | 'voided'
+  status: 'complete' | 'return' | 'void'
   user_id: number
 }
 export type SaleItemType = {
@@ -175,4 +175,6 @@ export type ReturnRevenueType = {
 export type SettingsType = {
   logo: string
   locale: string
+  tax: number
+  is_tax_inclusive: number
 }

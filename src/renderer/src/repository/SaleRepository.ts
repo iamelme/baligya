@@ -1,61 +1,101 @@
-import { Database } from 'better-sqlite3'
-import { IInventoryRepository } from '../interfaces/IInventoryRepository'
+import { Database } from "better-sqlite3";
+import { IInventoryRepository } from "../interfaces/IInventoryRepository";
 import {
   SaleItem,
   ISaleRepository,
   ReturnType,
   Direction,
-  TopItemsType
-} from '../interfaces/ISaleRepository'
-import { ErrorType, PlaceOrderType, ReturnRevenueType, SaleItemType, SaleType } from '../shared/utils/types'
-import { ipcMain } from 'electron'
+  TopItemsType,
+} from "../interfaces/ISaleRepository";
+import {
+  ErrorType,
+  InventoryType,
+  PlaceOrderType,
+  ReturnRevenueType,
+  SaleItemType,
+  SaleType,
+} from "../shared/utils/types";
+import { ipcMain } from "electron";
 
 export class SaleRepository implements ISaleRepository {
-  private _database: Database
-  private _inventory: IInventoryRepository
+  private _database: Database;
+  private _inventory: IInventoryRepository;
   constructor(database: Database, inventory: IInventoryRepository) {
-    this._database = database
-    this._inventory = inventory
+    this._database = database;
+    this._inventory = inventory;
     ipcMain.handle(
-      'sale:getAll',
-      (_, params: { startDate: string, endDate: string, pageSize: number; cursorId: number; userId: number; direction?: Direction }) =>
-        this.getAll(params)
-    )
-    ipcMain.handle('sale:getByUserId', (_, id: number) => this.getByUserId(id))
-    ipcMain.handle('sale:getById', (_, id: number) => this.getById(id))
-    ipcMain.handle('sale:getRevenue', (_, params: { startDate: string; endDate: string }) =>
-      this.getRevenue(params)
-    )
-    ipcMain.handle(
-      'sale:getTopItems',
+      "sale:getAll",
       (
         _,
         params: {
-          pageSize: number
-          cursorId: number
-          lastTotal: number
-          direction?: Direction
-          startDate: string
-          endDate: string
-        }
-      ) => this.getTopItems(params)
-    )
-    ipcMain.handle('sale:insertItem', (_, params: SaleItem) => this.insertItem(params))
-    ipcMain.handle('sale:placeOrder', (_, params: PlaceOrderType) => this.placeOrder(params))
-    ipcMain.handle('sale:updateStatus', (_, params: { id: number; status: string }) =>
-      this.updateStatus(params)
-    )
-    ipcMain.handle('sale:deleteAllItems', (_, sale_id: number) => this.deleteAllItems(sale_id))
+          startDate: string;
+          endDate: string;
+          pageSize: number;
+          cursorId: number;
+          userId: number;
+          direction?: Direction;
+        },
+      ) => this.getAll(params),
+    );
+    ipcMain.handle("sale:getByUserId", (_, id: number) => this.getByUserId(id));
+    ipcMain.handle("sale:getById", (_, id: number) => this.getById(id));
+    ipcMain.handle(
+      "sale:getRevenue",
+      (_, params: { startDate: string; endDate: string }) =>
+        this.getRevenue(params),
+    );
+    ipcMain.handle(
+      "sale:getTopItems",
+      (
+        _,
+        params: {
+          pageSize: number;
+          cursorId: number;
+          lastTotal: number;
+          direction?: Direction;
+          startDate: string;
+          endDate: string;
+        },
+      ) => this.getTopItems(params),
+    );
+    ipcMain.handle("sale:insertItem", (_, params: SaleItem) =>
+      this.insertItem(params),
+    );
+    ipcMain.handle("sale:placeOrder", (_, params: PlaceOrderType) =>
+      this.placeOrder(params),
+    );
+    ipcMain.handle(
+      "sale:updateStatus",
+      (_, params: { id: number; status: SaleType["status"] }) =>
+        this.updateStatus(params),
+    );
+    ipcMain.handle("sale:deleteAllItems", (_, sale_id: number) =>
+      this.deleteAllItems(sale_id),
+    );
   }
-  getAll(params: { startDate: string, endDate: string, pageSize: number; cursorId: number; userId: number; direction?: Direction }): {
-    data: SaleType[] | null
-    error: Error | string
+  getAll(params: {
+    startDate: string;
+    endDate: string;
+    pageSize: number;
+    cursorId: number;
+    userId: number;
+    direction?: Direction;
+  }): {
+    data: SaleType[] | null;
+    error: Error | string;
   } {
-    const { startDate, endDate, cursorId, userId, direction = 'next', pageSize } = params
-    console.log('repo currentId', params)
+    const {
+      startDate,
+      endDate,
+      cursorId,
+      userId,
+      direction = "next",
+      pageSize,
+    } = params;
+    console.log("repo currentId", params);
 
     try {
-      const db = this._database
+      const db = this._database;
 
       let stmt = `
         SELECT
@@ -69,9 +109,9 @@ export class SaleRepository implements ISaleRepository {
           (? IS FALSE OR created_at >= ?)
           AND
           (? IS FALSE OR created_at <= ?)
-        LIMIT ?`
+        LIMIT ?`;
 
-      if (direction === 'prev') {
+      if (direction === "prev") {
         stmt = `
         SELECT
           *
@@ -85,40 +125,48 @@ export class SaleRepository implements ISaleRepository {
           AND
           (? IS FALSE OR created_at <= ?)
         ORDER BY id DESC
-        LIMIT ?`
+        LIMIT ?`;
       }
 
       const sales = db
         .prepare(stmt)
-        .all(userId, cursorId, startDate, startDate, endDate, endDate, pageSize + 1) as SaleType[]
+        .all(
+          userId,
+          cursorId,
+          startDate,
+          startDate,
+          endDate,
+          endDate,
+          pageSize + 1,
+        ) as SaleType[];
 
       // console.log({ sales })
 
       if (!sales) {
-        throw new Error('Sorry no sales')
+        throw new Error("Sorry no sales");
       }
 
       return {
         data: sales,
-        error: ''
-      }
+        error: "",
+      };
     } catch (error) {
       if (error instanceof Error) {
         return {
           data: null,
-          error: new Error('Something went wrong while retrieving the product')
-        }
+          error: new Error("Something went wrong while retrieving the product"),
+        };
       }
       return {
         data: null,
-        error: new Error('Something went wrong while  retrieving the product')
-      }
+        error: new Error("Something went wrong while  retrieving the product"),
+      };
     }
   }
 
   getByUserId(id: number): {
-    data: SaleType & { items: SaleItemType[] } | null
-    error: ErrorType
+    data: (SaleType & { items: SaleItemType[] }) | null;
+    error: ErrorType;
   } {
     try {
       const stmt = `
@@ -127,45 +175,38 @@ export class SaleRepository implements ISaleRepository {
                 LEFT JOIN products AS p ON p.id = si.product_id
                 LEFT JOIN inventory AS i ON i.product_id = p.id
                 WHERE si.user_id = ?;
-                `
+                `;
       const stmtSale = `
             SELECT s.id, s.sub_total, s.discount, s.total
             FROM sales AS s
             WHERE user_id = ?
-            `
+            `;
       const transaction = this._database.transaction(() => {
-        console.log('transaction start')
+        console.log("transaction start");
 
         const saleItems = this._database
-          .prepare(
-            stmt
-          )
-          .all(id) as SaleItemType[]
+          .prepare(stmt)
+          .all(id) as SaleItemType[];
 
-        let sale = this._database
-          .prepare(
-            stmtSale
-          )
-          .get(id) as SaleType
+        let sale = this._database.prepare(stmtSale).get(id) as SaleType;
 
-        console.log('sale get by user ', sale)
+        console.log("sale get by user ", sale);
 
         if (!sale) {
-          const sale = this.create(id).data
-          console.log('create sale', sale)
+          const sale = this.create(id).data;
+          console.log("create sale", sale);
           return {
             sale,
-            items: saleItems
-          }
+            items: saleItems,
+          };
         }
 
         return {
           sale,
-          items: saleItems
-        }
-
-      })
-      const res = transaction()
+          items: saleItems,
+        };
+      });
+      const res = transaction();
 
       // console.log('sale', sale, saleItems)
 
@@ -173,33 +214,33 @@ export class SaleRepository implements ISaleRepository {
         return {
           data: {
             ...res.sale,
-            items: res.items
+            items: res.items,
           },
-          error: ''
-        }
+          error: "",
+        };
       }
 
       return {
         data: null,
-        error: new Error('Something went wrong while retrieving the product.')
-      }
+        error: new Error("Something went wrong while retrieving the product."),
+      };
     } catch (error) {
-      console.log('inside catch', error)
+      console.log("inside catch", error);
       if (error instanceof Error) {
         return {
           data: null,
-          error: new Error('Something went wrong while retrieving the product')
-        }
+          error: new Error("Something went wrong while retrieving the product"),
+        };
       }
       return {
         data: null,
-        error: new Error('Something went wrong while  retrieving the product')
-      }
+        error: new Error("Something went wrong while  retrieving the product"),
+      };
     }
   }
 
   getById(id: number): ReturnType {
-    const db = this._database
+    const db = this._database;
     try {
       const transaction = db.transaction(() => {
         const sales = db
@@ -209,9 +250,9 @@ export class SaleRepository implements ISaleRepository {
           FROM sales AS s
           LEFT JOIN payments AS p ON p.sale_id = s.id
           WHERE s.id = ?
-          `
+          `,
           )
-          .get(id) as SaleType & { amount: number, method: string }
+          .get(id) as SaleType & { amount: number; method: string };
 
         const saleItems = db
           .prepare(
@@ -236,49 +277,53 @@ export class SaleRepository implements ISaleRepository {
               si.sale_id = ?
             GROUP BY
               si.product_id;
-            `
+            `,
           )
-          .all(id) as SaleItemType[]
+          .all(id) as SaleItemType[];
 
         return {
           sales,
-          saleItems
-        }
-      })
+          saleItems,
+        };
+      });
 
-      const res = transaction()
+      const res = transaction();
 
       if (!res) {
-        throw new Error('Something went wrong while retrieving the product')
+        throw new Error("Something went wrong while retrieving the product");
       }
 
       return {
         data: {
           ...res.sales,
-          items: res.saleItems
+          items: res.saleItems,
         },
-        error: ''
-      }
+        error: "",
+      };
     } catch (error) {
       if (error instanceof Error) {
         return {
           data: null,
-          error: new Error('Something went wrong while retrieving the product')
-        }
+          error: new Error("Something went wrong while retrieving the product"),
+        };
       }
       return {
         data: null,
-        error: new Error('Something went wrong while  retrieving the product')
-      }
+        error: new Error("Something went wrong while  retrieving the product"),
+      };
     }
   }
 
-  getRevenue(params: { startDate: string; endDate: string, isQuarterly?: boolean }): {
-    data: ReturnRevenueType | null
-    error: ErrorType
+  getRevenue(params: {
+    startDate: string;
+    endDate: string;
+    isQuarterly?: boolean;
+  }): {
+    data: ReturnRevenueType | null;
+    error: ErrorType;
   } {
-    const { startDate, endDate, isQuarterly = false } = params
-    const db = this._database
+    const { startDate, endDate, isQuarterly = false } = params;
+    const db = this._database;
     try {
       const stmt = `
         SELECT
@@ -307,70 +352,67 @@ export class SaleRepository implements ISaleRepository {
               created_at >= ?
               AND
               created_at <= ?
-        ) AS r        `
-
+        ) AS r        `;
 
       if (isQuarterly) {
         const res = db
           .prepare(stmt)
-          .all(startDate, endDate, startDate, endDate) as ReturnRevenueType
+          .all(startDate, endDate, startDate, endDate) as ReturnRevenueType;
 
         if (!res) {
-          throw new Error('Something went wrong while  retrieving')
+          throw new Error("Something went wrong while  retrieving");
         }
 
         return {
           data: res,
-          error: ''
-        }
+          error: "",
+        };
       } else {
         const res = db
           .prepare(stmt)
-          .get(startDate, endDate, startDate, endDate) as ReturnRevenueType
+          .get(startDate, endDate, startDate, endDate) as ReturnRevenueType;
         if (!res) {
-          throw new Error('Something went wrong while  retrieving')
+          throw new Error("Something went wrong while  retrieving");
         }
         return {
           data: res,
-          error: ''
-        }
+          error: "",
+        };
       }
-
-
     } catch (error) {
       if (error instanceof Error) {
         return {
           data: null,
-          error: new Error('Something went wrong while retrieving ')
-        }
+          error: new Error("Something went wrong while retrieving "),
+        };
       }
       return {
         data: null,
-        error: new Error('Something went wrong while retrieving')
-      }
+        error: new Error("Something went wrong while retrieving"),
+      };
     }
   }
 
   getTopItems(params: {
-    pageSize: number
-    cursorId: number
-    lastTotal: number
-    startDate: string
-    endDate: string
-    direction?: Direction
+    pageSize: number;
+    cursorId: number;
+    lastTotal: number;
+    startDate: string;
+    endDate: string;
+    direction?: Direction;
   }): {
-    data: TopItemsType[] | null
-    error: ErrorType
+    data: TopItemsType[] | null;
+    error: ErrorType;
   } {
     const {
       pageSize,
       //  cursorId,
       //   lastTotal,
       startDate,
-      endDate
-    } = params
+      endDate,
+    } = params;
     try {
-      console.log('params', params)
+      console.log("params", params);
 
       const stmt = `
       SELECT
@@ -403,7 +445,7 @@ export class SaleRepository implements ISaleRepository {
         SUM(si.quantity) - COALESCE(SUM(ri.return_qty), 0) > 0
       ORDER BY net_quantity_sold DESC
       LIMIT ?;
-      `
+      `;
       const products = this._database
         .prepare(stmt)
         .all(
@@ -415,222 +457,239 @@ export class SaleRepository implements ISaleRepository {
           startDate,
           endDate,
           endDate,
-          pageSize
-        ) as TopItemsType[]
+          pageSize,
+        ) as TopItemsType[];
 
-      console.log(products)
+      console.log(products);
 
       if (!products) {
-        throw new Error('')
+        throw new Error("");
       }
 
       return {
         data: products,
-        error: ''
-      }
+        error: "",
+      };
     } catch (error) {
       if (error instanceof Error) {
-        console.log(error)
+        console.log(error);
 
         return {
           data: null,
-          error: new Error('Something went wrong while retrieving the product')
-        }
+          error: new Error("Something went wrong while retrieving the product"),
+        };
       }
       return {
         data: null,
-        error: new Error('Something went wrong while  retrieving the product')
-      }
+        error: new Error("Something went wrong while  retrieving the product"),
+      };
     }
   }
 
-  create(user_id: number): { data: SaleType | null, error: ErrorType } {
-    const createdAt = new Date().toISOString()
+  create(user_id: number): { data: SaleType | null; error: ErrorType } {
+    const createdAt = new Date().toISOString();
+    const db = this._database;
     try {
-      const db = this._database
-
-      const stmtInsert = `
+      const stmt = db.prepare(`
         INSERT INTO sales (created_at, status, user_id)
         VALUES(?, ?, ?)
         RETURNING id
-        `
+        `);
 
-
-      const stmt = db.prepare(stmtInsert)
-
-      const sale = stmt.get(createdAt, 'in-progress', user_id) as SaleType
-
-
-      console.log('returning sale', sale)
+      const sale = stmt.get(createdAt, "in-progress", user_id) as SaleType;
 
       if (!sale.id) {
-        throw new Error('Something went wrong while creating a sale')
+        throw new Error("Something went wrong while creating a sale");
       }
-
 
       return {
         data: sale,
-        error: ''
-      }
+        error: "",
+      };
     } catch (error) {
-      console.log('inside catch', error)
       if (error instanceof Error) {
         return {
           data: null,
-          error: new Error('Something went wrong while creating a sale')
-        }
+          error: new Error("Something went wrong while creating a sale"),
+        };
       }
       return {
         data: null,
-        error: new Error('Something went wrong while creating a sale')
-      }
+        error: new Error("Something went wrong while creating a sale"),
+      };
     }
   }
 
-  placeOrder(params: PlaceOrderType): { success: boolean; error: Error | string } {
-    const { cart, amount, reference_number, method, user_id, customer_name } = params
-    const createdAt = new Date().toISOString()
+  placeOrder(params: PlaceOrderType): {
+    data: Pick<SaleType, "id"> | null;
+    error: Error | string;
+  } {
+    const { cart, amount, reference_number, method, user_id, customer_name } =
+      params;
+    const createdAt = new Date().toISOString();
+    const db = this._database;
+
     try {
-      const transaction = this._database.transaction(() => {
-        console.log('place order start', params)
-
-        const saleId = this.create(user_id).data?.id
-
-        if (!saleId) {
-          return false
-        }
-
-        const invoiceNo = String(saleId).padStart(8, '0')
-
-        this._database
-          .prepare(
-            `
+      const stmtSale = db.prepare(
+        `
           UPDATE sales
           SET status = ?,
           invoice_number = ?,
           sub_total = ?,
           discount = ?,
+          vatable_sales = ?,
+          vat_amount = ?,
           total = ?,
           customer_name = ?
           WHERE id = ?
-          `
-          )
-          .run(
-            'complete',
-            invoiceNo,
-            cart.sub_total,
-            cart.discount,
-            cart.total,
-            customer_name,
-            saleId
-          )
+          `,
+      );
 
-        // console.log('cart items', cart.items)
-
-        try {
-          const saleItemsStmt = this._database.prepare(`
-            INSERT INTO sale_items (created_at, quantity, unit_price, unit_cost, line_total, sale_id, product_id, user_id)
+      const saleItemsStmt = db.prepare(`
+            INSERT INTO
+              sale_items
+              (created_at, quantity, unit_price, unit_cost, line_total, sale_id, product_id, user_id)
             VALUES(?, ?, ?, ?, ?, ?, ?, ?)
-            `)
+            `);
 
-          const invStmt = this._database.prepare(
-            `
+      const invStmt = db.prepare(
+        `
             UPDATE inventory
             SET quantity = quantity - ?
             WHERE product_id = ?
-            `
-          )
+            `,
+      );
 
-          const invMovStmt = this._database.prepare(
-            `INSERT INTO inventory_movement (created_at, movement_type, reference_type, quantity, reference_id, product_id, user_id)
+      const invMovStmt = db.prepare(
+        `INSERT INTO
+          inventory_movement
+          (created_at, movement_type, reference_type, quantity, reference_id, product_id, user_id)
           VALUES(?, ?, ?, ?, ?, ?, ?)
-          `
-          )
-          for (const item of cart.items) {
-            const line_total = item.quantity * item.price
+          `,
+      );
 
-            saleItemsStmt.run(
-              createdAt,
-              item.quantity,
-              item.price,
-              item.cost,
-              line_total,
-              saleId,
-              item.product_id,
-              item.user_id
-            )
+      const paymentStmt = db.prepare(
+        `
+          INSERT INTO
+            payments
+            (created_at, amount, reference_number, method, sale_id)
+          VALUES(?, ?, ?, ?, ?)
+          `,
+      );
 
-            invStmt.run(item.quantity, item.product_id)
-            invMovStmt.run(
-              createdAt,
-              1,
-              'sales',
-              item.quantity,
-              saleId,
-              item.product_id,
-              item.user_id
-            )
-          }
-        } catch (error) {
-          console.error(error)
+      const transaction = db.transaction(() => {
+        console.log("place order start", params);
+
+        const saleId = this.create(user_id).data?.id;
+
+        if (!saleId) {
+          return false;
         }
 
-        console.log('after loop')
+        const invoiceNo = String(saleId).padStart(8, "0");
 
-        const normalizeAmount = amount * 100
+        stmtSale.run(
+          "complete",
+          invoiceNo,
+          cart.sub_total,
+          cart.discount,
+          cart.vatable_sales,
+          cart.vat_amount,
+          cart.total,
+          customer_name,
+          saleId,
+        );
 
-        this._database
-          .prepare(
-            `
-          INSERT INTO payments (created_at, amount, reference_number, method, sale_id)
-          VALUES(?, ?, ?, ?, ?)
-          `
-          )
-          .run(createdAt, normalizeAmount, reference_number, method, saleId)
+        for (const item of cart.items) {
+          const line_total = item.quantity * item.price;
 
-        return true
-      })
+          saleItemsStmt.run(
+            createdAt,
+            item.quantity,
+            item.price,
+            item.cost,
+            line_total,
+            saleId,
+            item.product_id,
+            item.user_id,
+          );
 
-      const res = transaction()
+          invStmt.run(item.quantity, item.product_id);
+          invMovStmt.run(
+            createdAt,
+            1,
+            "sales",
+            item.quantity * -1,
+            saleId,
+            item.product_id,
+            item.user_id,
+          );
+        }
 
-      console.log('res transaction', res)
+        console.log("after loop");
+
+        const normalizeAmount = amount * 100;
+
+        paymentStmt.run(
+          createdAt,
+          normalizeAmount,
+          reference_number,
+          method,
+          saleId,
+        );
+
+        return saleId;
+      });
+
+      const res = transaction();
+
+      console.log("res transaction", res);
 
       if (!res) {
-        throw new Error('Something went wrong while creating an item the product')
+        throw new Error(
+          "Something went wrong while creating an item the product",
+        );
       }
 
       return {
-        success: true,
-        error: ''
-      }
+        data: {
+          id: res,
+        },
+        error: "",
+      };
     } catch (error) {
+      console.log(error);
       if (error instanceof Error) {
         return {
-          success: false,
-          error: new Error('Something went wrong while creating a sale')
-        }
+          data: null,
+          error: new Error("Something went wrong while creating a sale"),
+        };
       }
       return {
-        success: false,
-        error: new Error('Something went wrong while creating a sale')
-      }
+        data: null,
+        error: new Error("Something went wrong while creating a sale"),
+      };
     }
   }
 
   insertItem(params: SaleItem): {
-    data: Pick<SaleType, "id" | "sub_total" | "discount" | "total"> & { items: SaleItemType[] } | null
-    error: ErrorType
+    data:
+      | (Pick<SaleType, "id" | "sub_total" | "discount" | "total"> & {
+          items: SaleItemType[];
+        })
+      | null;
+    error: ErrorType;
   } {
-    const { sale_id, product_id, user_id } = params
+    const { sale_id, product_id, user_id } = params;
     try {
-      let saleId = sale_id
+      let saleId = sale_id;
 
-      const db = this._database
+      const db = this._database;
       const transaction = db.transaction(() => {
         if (!sale_id) {
-          const sale = this.create(user_id).data
+          const sale = this.create(user_id).data;
           if (sale) {
-            saleId = sale.id
+            saleId = sale.id;
           }
         }
 
@@ -641,38 +700,34 @@ export class SaleRepository implements ISaleRepository {
           FROM sale_items AS si
           LEFT JOIN inventory AS i ON si.product_id = i.product_id
           WHERE si.product_id = ?;
-          `
+          `,
           )
-          .get(product_id) as SaleItemType
+          .get(product_id) as SaleItemType;
 
         // check if product is in the sale items
         // then update the sale item's quantity if not exceed to product's quantity
 
-        console.log({ foundItem })
+        console.log({ foundItem });
 
         if (foundItem) {
           if (foundItem.quantity >= foundItem.product_quantity) {
-            throw new Error('You cannot add more to this product')
+            throw new Error("You cannot add more to this product");
           }
 
-          db
-            .prepare(
-              `
+          db.prepare(
+            `
             UPDATE sale_items
             SET quantity = quantity + 1
             WHERE id = ?
-            `
-            )
-            .run(foundItem.id)
+            `,
+          ).run(foundItem.id);
         } else {
-          db
-            .prepare(
-              `
+          db.prepare(
+            `
             INSERT INTO sale_items (quantity, sale_id, product_id, user_id)
             VALUES(1, ?, ?, ?)
-            `
-            )
-            .run(saleId, product_id, user_id)
+            `,
+          ).run(saleId, product_id, user_id);
         }
 
         // select all items
@@ -683,38 +738,40 @@ export class SaleRepository implements ISaleRepository {
             `SELECT *
             FROM sale_items AS si
             LEFT JOIN products AS p ON p.id = si.product_id
-            WHERE sale_id = ?`
+            WHERE sale_id = ?`,
           )
-          .all(saleId) as SaleItemType[]
+          .all(saleId) as SaleItemType[];
 
-        console.log('from insert', { items })
+        console.log("from insert", { items });
 
-        const subTotal = items?.reduce((acc, cur) => (acc += cur.quantity * cur.price), 0)
+        const subTotal = items?.reduce(
+          (acc, cur) => (acc += cur.quantity * cur.price),
+          0,
+        );
 
         const saleDiscount = db
           .prepare(
             `SELECT discount
           FROM sales
           WHERE id = ?
-          `
+          `,
           )
-          .get(saleId) as SaleType
+          .get(saleId) as SaleType;
 
-        console.log('discount', saleDiscount, subTotal)
+        console.log("discount", saleDiscount, subTotal);
 
-        const total = (subTotal || 0) - (saleDiscount.discount ?? 0)
+        const total = (subTotal || 0) - (saleDiscount.discount ?? 0);
 
-        console.log('total', total)
+        console.log("total", total);
 
-        db
-          .prepare(
-            `UPDATE sales
+        db.prepare(
+          `UPDATE sales
           SET sub_total = ?,
           total = ?
-          WHERE id = ?`
-          ).run(subTotal, total, saleId)
+          WHERE id = ?`,
+        ).run(subTotal, total, saleId);
 
-        console.log('done inserting')
+        console.log("done inserting");
 
         return {
           data: {
@@ -724,48 +781,56 @@ export class SaleRepository implements ISaleRepository {
             discount: saleDiscount.discount,
             total,
           },
-          error: ''
-        }
-      })
+          error: "",
+        };
+      });
 
-      const res = transaction()
+      const res = transaction();
 
       if (!res) {
-        throw new Error('Something went wrong while creating an item the product')
+        throw new Error(
+          "Something went wrong while creating an item the product",
+        );
       }
 
       return {
         data: res.data,
-        error: ''
-      }
+        error: "",
+      };
     } catch (error) {
-      console.log('error insert ', error)
+      console.log("error insert ", error);
 
       if (error instanceof Error) {
         return {
           data: null,
           error: new Error(
-            error.message ?? 'Something went wrong while creating an item the product'
-          )
-        }
+            error.message ??
+              "Something went wrong while creating an item the product",
+          ),
+        };
       }
       return {
         data: null,
-        error: new Error('Something went wrong while creating an item the product')
-      }
+        error: new Error(
+          "Something went wrong while creating an item the product",
+        ),
+      };
     }
   }
 
-  updateStatus(params: { id: number; status: string }): { success: boolean; error: ErrorType } {
-    const { id, status } = params
+  updateStatus(params: { id: number; status: SaleType["status"] }): {
+    success: boolean;
+    error: ErrorType;
+  } {
+    const { id, status } = params;
     try {
-      const db = this._database
+      const db = this._database;
       const stmt = db.prepare(`
         UPDATE sales
         SET status = ?
         WHERE id = ?
         RETURNING id
-      `)
+      `);
 
       const itemStmt = db.prepare(
         `
@@ -773,59 +838,76 @@ export class SaleRepository implements ISaleRepository {
             FROM sale_items si
             LEFT JOIN inventory i ON si.product_id = i.product_id
             WHERE si.sale_id = ?
-            `
-      )
+            `,
+      );
 
       const transaction = db.transaction(() => {
-        const sales = stmt.run(status, id)
+        const sales = stmt.run(status, id);
 
-        const items = itemStmt.all(id) as Array<SaleItemType & { old_quantity: number }>
+        const items = itemStmt.all(id) as Array<
+          SaleItemType & { old_quantity: number }
+        >;
 
-        const isVoid = status === 'void'
+        const isVoid = status === "void";
 
-        if (status !== 'in-progress') {
-          for (let i = 0; i < items.length; i++) {
-            const item = items[i]
+        let referenceType: InventoryType["reference_type"] | undefined;
 
-            const resItem = this._inventory.update({
-              quantity: isVoid ? item.old_quantity + item.quantity : item.quantity,
-              id: item.inventory_id,
-              product_id: item.product_id,
-              user_id: item.user_id,
-              movement_type: isVoid ? 0 : 1,
-              reference_type: isVoid ? 'void' : 'adjustment'
-            })
+        switch (status) {
+          case "void":
+            referenceType = "void";
+            break;
+          case "return":
+            referenceType = "return";
+            break;
+          default:
+            referenceType = "sale";
+            break;
+        }
 
-            if (!resItem) {
-              throw new Error('Something went wrong while updating the sale')
-            }
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+
+          const resItem = this._inventory.update({
+            quantity: !isVoid ? item.quantity * -1 : item.quantity,
+            id: item.inventory_id,
+            product_id: item.product_id,
+            user_id: item.user_id,
+            movement_type: isVoid ? 0 : 1,
+            reference_type: referenceType,
+          });
+
+          if (!resItem) {
+            throw new Error("Something went wrong while updating the sale");
           }
         }
 
         if (!sales) {
-          throw new Error('Something went wrong while updating the sale')
+          throw new Error("Something went wrong while updating the sale");
         }
-        return true
-      })
-      transaction()
+        return true;
+      });
+      transaction();
 
       return {
         success: true,
-        error: ''
-      }
+        error: "",
+      };
     } catch (error) {
       if (error instanceof Error) {
         return {
           success: false,
           error: new Error(
-            error.message ?? 'Something went wrong while deleting an item the product'
-          )
-        }
+            error.message ??
+              "Something went wrong while deleting an item the product",
+          ),
+        };
       }
       return {
         success: false,
-        error: new Error('Something went wrong while deleting an item the product')
-      }
+        error: new Error(
+          "Something went wrong while deleting an item the product",
+        ),
+      };
     }
   }
 
@@ -835,9 +917,9 @@ export class SaleRepository implements ISaleRepository {
         this._database
           .prepare(
             `DELETE FROM sale_items
-        WHERE sale_id = ?`
+        WHERE sale_id = ?`,
           )
-          .run(saleId)
+          .run(saleId);
 
         this._database
           .prepare(
@@ -846,30 +928,33 @@ export class SaleRepository implements ISaleRepository {
           sub_total = 0,
           total = 0
           WHERE id = ?
-          `
+          `,
           )
-          .run(saleId)
-      })
+          .run(saleId);
+      });
 
-      transaction()
+      transaction();
 
       return {
         success: true,
-        error: new Error('Something went wrong while deleting the sale')
-      }
+        error: new Error("Something went wrong while deleting the sale"),
+      };
     } catch (error) {
       if (error instanceof Error) {
         return {
           success: false,
           error: new Error(
-            error.message ?? 'Something went wrong while deleting an item the product'
-          )
-        }
+            error.message ??
+              "Something went wrong while deleting an item the product",
+          ),
+        };
       }
       return {
         success: false,
-        error: new Error('Something went wrong while deleting an item the product')
-      }
+        error: new Error(
+          "Something went wrong while deleting an item the product",
+        ),
+      };
     }
   }
 }

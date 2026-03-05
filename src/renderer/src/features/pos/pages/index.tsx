@@ -1,105 +1,119 @@
-import Summary from '../components/Summary'
-import Alert from '@renderer/shared/components/ui/Alert'
-import Button from '@renderer/shared/components/ui/Button'
-import Input from '@renderer/shared/components/ui/Input'
-import Price from '@renderer/shared/components/ui/Price'
-import useBoundStore from '@renderer/shared/stores//boundStore'
-import { FormEvent, ReactNode, useEffect, useRef, useState } from 'react'
-import { Trash2 } from 'react-feather'
-import { NumericFormat } from 'react-number-format'
-import CartItems from '../components/CartItems'
-import useCart from '../hooks/useCart'
-import useInsertCartItem from '../hooks/useInsertCartItem'
-import useRemoveCart from '../hooks/useRemoveCart'
-import useDebounce from '@renderer/shared/hooks/useDebounce'
-import useDiscount from '../hooks/useDiscount'
-import useRemoveItem from '../hooks/useRemoveItem'
-import useUpdateItemQty from '../hooks/useUpdateItemQty'
-import usePlaceOrder from '../hooks/usePlaceOrder'
-import { CartItemType } from '@renderer/shared/utils/types'
+import Summary from "../components/Summary";
+import Alert from "@renderer/shared/components/ui/Alert";
+import Button from "@renderer/shared/components/ui/Button";
+import Input from "@renderer/shared/components/ui/Input";
+import Price from "@renderer/shared/components/ui/Price";
+import useBoundStore from "@renderer/shared/stores//boundStore";
+import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
+import { Trash2 } from "react-feather";
+import { NumericFormat } from "react-number-format";
+import CartItems from "../components/CartItems";
+import useCart from "../hooks/useCart";
+import useInsertCartItem from "../hooks/useInsertCartItem";
+import useRemoveCart from "../hooks/useRemoveCart";
+import useDebounce from "@renderer/shared/hooks/useDebounce";
+import useDiscount from "../hooks/useDiscount";
+import useRemoveItem from "../hooks/useRemoveItem";
+import useUpdateItemQty from "../hooks/useUpdateItemQty";
+import usePlaceOrder from "../hooks/usePlaceOrder";
+import { CartItemType, SettingsType } from "@renderer/shared/utils/types";
+import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function POS(): ReactNode {
-  const inputRef = useRef<HTMLInputElement>(null)
-  const inputAmountRef = useRef<HTMLInputElement>(null)
-  const inputRefNoRef = useRef<HTMLInputElement>(null)
-  const inputRefCustName = useRef<HTMLInputElement>(null)
-  const btnUpdateQtyRef = useRef({})
+  const inputRef = useRef<HTMLInputElement>(null);
+  const inputAmountRef = useRef<HTMLInputElement>(null);
+  const inputRefNoRef = useRef<HTMLInputElement>(null);
+  const inputRefCustName = useRef<HTMLInputElement>(null);
+  const btnUpdateQtyRef = useRef({});
 
-  const [discount, setDiscount] = useState(0)
+  const [discount, setDiscount] = useState(0);
+  const queryClient = useQueryClient();
+  const settings: SettingsType | undefined = queryClient.getQueryData([
+    "settings",
+  ]);
 
-  // const debounceValue = useDebounce(String(discount))
-  //
-  // console.log({ debounceValue })
+  const navigate = useNavigate();
 
   const setBtnRef = (item: CartItemType, el: HTMLElement | null): void => {
     if (el) {
-      btnUpdateQtyRef.current[item.id] = el
-      btnUpdateQtyRef.current[item.id].quantity = item.quantity
+      btnUpdateQtyRef.current[item.id] = el;
+      btnUpdateQtyRef.current[item.id].quantity = item.quantity;
     } else {
-      delete btnUpdateQtyRef.current[item.id]
+      delete btnUpdateQtyRef.current[item.id];
     }
-  }
+  };
 
-  const [amount, setAmount] = useState(0)
-  const [paymentMethod, setPaymentMethod] = useState('cash')
+  const [amount, setAmount] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState("cash");
 
   const isFirstRender = useRef(true);
 
-  const user = useBoundStore((state) => state.user)
+  const user = useBoundStore((state) => state.user);
 
-  const { data, isPending, error } = useCart(user?.id)
+  const { data, isPending, error } = useCart(user?.id);
 
-  const mutationInsert = useInsertCartItem({ id: data?.id, userId: user.id, inputRef })
+  const mutationInsert = useInsertCartItem({
+    id: data?.id,
+    userId: user.id,
+    inputRef,
+  });
 
   const mutationRemoveCart = useRemoveCart({
     id: data?.id,
     onAmount: setAmount,
     onPaymentMethod: setPaymentMethod,
     inputRefNoRef,
-    inputRefCustName
-  })
+    inputRefCustName,
+  });
 
-  const debounceValue = useDebounce(String(discount))
+  const debounceValue = useDebounce(String(discount));
 
-  const mutationUpdateDiscount = useDiscount({ id: data?.id, total: data?.total || 0 })
+  const mutationUpdateDiscount = useDiscount({
+    id: data?.id,
+    total: data?.total || 0,
+  });
 
   useEffect(() => {
-
     if (isFirstRender.current) {
-      isFirstRender.current = false
-      return
+      isFirstRender.current = false;
+      return;
     }
-    mutationUpdateDiscount.mutate(Number(debounceValue))
+    mutationUpdateDiscount.mutate(Number(debounceValue));
+  }, [debounceValue]);
 
-  }, [debounceValue])
-
-  const mutationUpdateItemQty = useUpdateItemQty({ id: data?.id, btnUpdateQtyRef })
+  const mutationUpdateItemQty = useUpdateItemQty({
+    id: data?.id,
+    btnUpdateQtyRef,
+  });
 
   const mutationPlaceOrder = usePlaceOrder({
-    onRemoveCart: () => mutationRemoveCart.mutate()
-  })
+    onRemoveCart: () => mutationRemoveCart.mutate(),
+  });
 
   const mutationRemoveItem = useRemoveItem({
     id: data?.id,
-    onRemoveCart: data?.items?.length === 1 ? () => mutationRemoveCart.mutate() : undefined
-  })
+    onRemoveCart:
+      data?.items?.length === 1 ? () => mutationRemoveCart.mutate() : undefined,
+  });
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
-    e.preventDefault()
+    e.preventDefault();
     if (inputRef.current && data?.id && user.id && inputRef.current.value) {
-      mutationInsert.mutate(Number(inputRef.current.value))
+      mutationInsert.mutate(Number(inputRef.current.value));
     }
-  }
+  };
 
   const handleClearCart = async (): Promise<void> => {
-    mutationRemoveCart.mutate()
-  }
+    mutationRemoveCart.mutate();
+  };
 
   const handlePlaceOrder = async (): Promise<void> => {
     if (!data?.id || !user.id || !data?.items?.length) {
-      throw new Error('Cannot place an order')
+      throw new Error("Cannot place an order");
     }
-    mutationPlaceOrder.mutate({
+
+    const saleId = await mutationPlaceOrder.mutateAsync({
       cart: {
         items: data.items,
         sub_total: data.sub_total,
@@ -107,27 +121,36 @@ export default function POS(): ReactNode {
         vatable_sales: data.vatable_sales,
         vat_amount: data.vat_amount,
         tax: data.tax,
-        total: data.total
+        total: data.total,
       },
       amount: amount ?? 0,
-      reference_number: inputRefNoRef.current ? inputRefNoRef.current.value : '',
-      customer_name: inputRefCustName.current ? inputRefCustName.current.value : '',
+      reference_number: inputRefNoRef.current
+        ? inputRefNoRef.current.value
+        : "",
+      customer_name: inputRefCustName.current
+        ? inputRefCustName.current.value
+        : "",
       method: paymentMethod,
       sale_id: data.id,
-      user_id: user.id
-    })
-  }
+      user_id: user.id,
+    });
+
+    if (saleId?.id && settings?.is_redirect_to_sales) {
+      navigate(`/sales/${saleId.id}`);
+    }
+  };
+  console.log({ settings });
 
   const handleRemoveItem = async (id: number): Promise<void> => {
-    mutationRemoveItem.mutate(id)
-  }
+    mutationRemoveItem.mutate(id);
+  };
 
   if (isPending) {
-    return <>Loading...</>
+    return <>Loading...</>;
   }
 
   if (error) {
-    return <Alert variant="danger">{error.message}</Alert>
+    return <Alert variant="danger">{error.message}</Alert>;
   }
 
   return (

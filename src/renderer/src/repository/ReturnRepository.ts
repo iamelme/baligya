@@ -60,7 +60,7 @@ export class ReturnRepository implements IReturnRepository {
 
       for (const item of items) {
         const resInv = this._inventory.update({
-          quantity: item.quantity + item.old_quantity,
+          quantity: item.quantity,
           id: item.inventory_id,
           product_id: item.product_id,
           user_id: item.user_id,
