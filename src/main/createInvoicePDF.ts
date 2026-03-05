@@ -40,7 +40,7 @@ export default function createPDF(
     "assets/images/logo.webp",
     "./assets/images/logo.webp",
     imgUrl,
-    join(userDataPath, "/kiosk-app/assets/images/logo.webp"),
+    join(userDataPath, "/baligya-app/assets/images/logo.webp"),
   ];
 
   const pageSize = doc.internal.pageSize;
