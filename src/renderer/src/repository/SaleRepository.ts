@@ -329,8 +329,8 @@ export class SaleRepository implements ISaleRepository {
         SELECT
           STRFTIME('%m',  s.created_at) AS month,
           s.gross_revenue,
-          r.total_return,
-          s.gross_revenue - r.total_return AS net_revenue
+          COALESCE(r.total_return, 0) as total_return,
+          s.gross_revenue - COALESCE(r.total_return, 0) AS net_revenue
         FROM (
           SELECT
             created_at,
@@ -353,6 +353,8 @@ export class SaleRepository implements ISaleRepository {
               AND
               created_at <= ?
         ) AS r        `;
+
+      console.log({ startDate, endDate });
 
       if (isQuarterly) {
         const res = db
