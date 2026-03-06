@@ -96,7 +96,7 @@ export type SaleType = {
   vatable_sales: number;
   vat_amount: number;
   total: number;
-  status: "complete" | "return" | "void";
+  status: "complete" | "return" | "partial_return" | "void";
   user_id: number;
 };
 export type SaleItemType = {
