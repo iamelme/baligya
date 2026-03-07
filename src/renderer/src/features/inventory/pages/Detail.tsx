@@ -167,7 +167,11 @@ export default function Detail(): ReactNode {
                   const { floatValue } = values;
 
                   if (floatValue) {
-                    setPageSize(floatValue)
+                    setSearchParams({
+                      ...searchParams,
+                      cursorId: "0",
+                    });
+                    setPageSize(floatValue);
                   }
                 }}
               />
