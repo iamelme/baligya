@@ -1,4 +1,6 @@
 import { HashRouter, Route, Routes } from "react-router-dom";
+
+import AuthPage from "../features/auth/pages";
 import Login from "../features/auth/pages/Login";
 import ProtectedRoutes from "./ProtectedRoutes";
 import App from "./App";
@@ -29,8 +31,10 @@ export default function Router() {
 
     <HashRouter>
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route path="/auth" element={<AuthPage />}>
+          <Route index element={<Login />} />
+          <Route path="signup" element={<Signup />} />
+        </Route>
         <Route
           path="/"
           element={
