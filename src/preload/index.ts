@@ -188,7 +188,11 @@ export const apiProduct = {
     direction?: "prev" | "next";
   }): Promise<{
     data: Array<
-      ProductType & { quantity: number; category_name: string }
+      ProductType & {
+        inventory_id: number;
+        quantity: number;
+        category_name: string;
+      }
     > | null;
     error: ErrorType;
   }> => ipcRenderer.invoke("product:getAll", params),
