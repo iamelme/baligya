@@ -32,7 +32,7 @@ export default function ProtectedRoutes({
   }, [user, navigate, userUpdate]);
 
   if (isLoading) {
-    return <>Loading...</>;
+    return;
   }
 
   return children;
