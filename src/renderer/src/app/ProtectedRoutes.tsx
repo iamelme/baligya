@@ -25,7 +25,7 @@ export default function ProtectedRoutes({
         }
       }
 
-      navigate("/login");
+      navigate("/auth");
     }
 
     setIsLoading(false);
