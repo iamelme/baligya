@@ -3,18 +3,18 @@ import { NavigateFunction } from "react-router-dom";
 import { UserType } from "src/renderer/src/shared/utils/types";
 
 type Params = {
-  navigate: NavigateFunction
-}
+  navigate: NavigateFunction;
+};
 
-export default function useSignup({ navigate }: Params): UseMutationResult<void, Error, UserType, unknown> {
-
+export default function useSignup({
+  navigate,
+}: Params): UseMutationResult<void, Error, UserType, unknown> {
   return useMutation({
     mutationFn: async (data: UserType): Promise<void> => {
-      await window.apiUser.create(data)
+      await window.apiUser.create(data);
     },
     onSuccess: () => {
-      navigate('/login')
-    }
-  })
-
+      navigate("/auth");
+    },
+  });
 }
