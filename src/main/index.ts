@@ -62,8 +62,6 @@ protocol.registerSchemesAsPrivileged([
 app.whenReady().then(() => {
   // Set app user model id for windows
 
-  initializeLogo();
-
   // protocol.handle(protocolName, (request: Request) => {
   protocol.handle(protocolName, (request: Request) => {
     // const userDataPath = app.getPath('userData')
@@ -90,6 +88,8 @@ app.whenReady().then(() => {
   const sales = new SaleRepository(db.db, inventory);
   new SettingsRepository(db.db);
   new ReturnRepository(db.db, inventory, sales);
+
+  initializeLogo(db.db);
 
   addBackUp(db.db);
 
