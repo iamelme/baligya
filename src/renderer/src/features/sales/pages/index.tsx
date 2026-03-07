@@ -69,6 +69,7 @@ export default function Sales(): ReactNode {
       normalizedEnd,
       user.id,
       searchParams.get("cursorId"),
+      pageSize,
       dir,
     ],
     queryFn: async (): Promise<SaleType[] | null> => {
@@ -188,6 +189,10 @@ export default function Sales(): ReactNode {
                 const { floatValue } = values;
 
                 if (floatValue) {
+                  setSearchParams({
+                    ...searchParams,
+                    cursorId: "0",
+                  });
                   setPageSize(floatValue);
                 }
               }}
