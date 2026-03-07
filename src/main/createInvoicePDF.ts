@@ -45,37 +45,39 @@ export default function createPDF(
 
   const pageSize = doc.internal.pageSize;
 
-  const imageData = fs.readFileSync(logo);
+  if (logo) {
+    const imageData = fs.readFileSync(logo);
 
-  const dimensions = imageSize(imageData);
-  const imgWidth = dimensions.width;
-  const imgHeight = dimensions.height;
+    const dimensions = imageSize(imageData);
+    const imgWidth = dimensions.width;
+    const imgHeight = dimensions.height;
 
-  const maxWidth = 50;
-  const maxHeight = 25;
+    const maxWidth = 50;
+    const maxHeight = 25;
 
-  let aspectRatio = 1;
-  let imgW = imgWidth;
-  let imgH = imgHeight;
+    let aspectRatio = 1;
+    let imgW = imgWidth;
+    let imgH = imgHeight;
 
-  if (imgWidth > maxWidth) {
-    aspectRatio = maxWidth / imgWidth;
-    imgW = maxWidth;
-    imgH = imgHeight * aspectRatio;
+    if (imgWidth > maxWidth) {
+      aspectRatio = maxWidth / imgWidth;
+      imgW = maxWidth;
+      imgH = imgHeight * aspectRatio;
+    }
+
+    if (imgHeight > maxHeight) {
+      aspectRatio = maxHeight / imgHeight;
+      imgW = imgWidth * aspectRatio;
+      imgH = maxHeight;
+    }
+
+    const base64Image = Buffer.from(imageData).toString("base64");
+
+    const mimeType = "image/webp";
+    const dataUri = `data:${mimeType};base64,${base64Image}`;
+
+    doc.addImage(dataUri, "WEBP", 15, 10, imgW, imgH);
   }
-
-  if (imgHeight > maxHeight) {
-    aspectRatio = maxHeight / imgHeight;
-    imgW = imgWidth * aspectRatio;
-    imgH = maxHeight;
-  }
-
-  const base64Image = Buffer.from(imageData).toString("base64");
-
-  const mimeType = "image/webp";
-  const dataUri = `data:${mimeType};base64,${base64Image}`;
-
-  doc.addImage(dataUri, "WEBP", 15, 10, imgW, imgH);
 
   doc.text("Invoice No.", pageSize.width - 15, 10, { align: "right" });
   doc.text(String(invoice_number), pageSize.width - 15, 20, { align: "right" });
