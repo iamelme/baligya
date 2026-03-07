@@ -1,12 +1,12 @@
-import FormWrapper from '@renderer/shared/components/form/FormWrapper'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNavigate, useParams } from 'react-router-dom'
-import z from 'zod'
-import useBoundStore from '@renderer/shared/stores//boundStore'
-import useProductFetch from '../hooks/useProductFetch'
-import useSubmit from '../hooks/useSubmit'
-import ProductDetailForm from '../components/ProductDetailForm'
-import Alert from '@renderer/shared/components/ui/Alert'
+import FormWrapper from "@renderer/shared/components/form/FormWrapper";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useParams } from "react-router-dom";
+import z from "zod";
+import useBoundStore from "@renderer/shared/stores//boundStore";
+import useProductFetch from "../hooks/useProductFetch";
+import useSubmit from "../hooks/useSubmit";
+import ProductDetailForm from "../components/ProductDetailForm";
+import Alert from "@renderer/shared/components/ui/Alert";
 
 const schema = z
   .object({
@@ -17,91 +17,92 @@ const schema = z
     price: z.coerce.number(),
     cost: z.coerce.number(),
     code: z.coerce.number(),
-    quantity: z.coerce.number().nonnegative().default(0),
     category_id: z.coerce.number().nullish(),
-    inventory_id: z.coerce.number().nullish()
+    inventory_id: z.coerce.number().nullish(),
   })
   .superRefine(async (data, ctx) => {
-    console.log({ data }, { ctx })
+    console.log({ data }, { ctx });
 
-    const normalizeCode = Number(data?.code)
+    const normalizeCode = Number(data?.code);
 
     if (!data.category_id) {
       ctx.addIssue({
-        code: 'custom',
-        message: 'There must be a category.',
-        path: ['category_id']
-      })
+        code: "custom",
+        message: "There must be a category.",
+        path: ["category_id"],
+      });
     }
 
     if (normalizeCode) {
-      const product = await window.apiProduct.getProductByCode(normalizeCode)
+      const product = await window.apiProduct.getProductByCode(normalizeCode);
 
       if (product.data && product.data?.id !== data?.id) {
         ctx.addIssue({
-          code: 'custom',
-          message: 'Code is already taken.',
-          path: ['code']
-        })
+          code: "custom",
+          message: "Code is already taken.",
+          path: ["code"],
+        });
       }
     }
 
-    const productName = await window.apiProduct.getProductByName(data?.name)
+    const productName = await window.apiProduct.getProductByName(data?.name);
 
     if (productName.data && productName.data?.id !== data?.id) {
       ctx.addIssue({
-        code: 'custom',
-        message: 'Name is already taken.',
-        path: ['name']
-      })
+        code: "custom",
+        message: "Name is already taken.",
+        path: ["name"],
+      });
     }
-    const productSku = await window.apiProduct.getProductBySku(data?.sku)
+    const productSku = await window.apiProduct.getProductBySku(data?.sku);
 
     if (productSku.data && productSku.data?.id !== data?.id) {
       ctx.addIssue({
-        code: 'custom',
-        message: 'SKU is already taken.',
-        path: ['sku']
-      })
+        code: "custom",
+        message: "SKU is already taken.",
+        path: ["sku"],
+      });
     }
-  })
+  });
 
-type ValuesType = z.infer<typeof schema>
+type ValuesType = z.infer<typeof schema>;
 
 export default function Detail(): React.JSX.Element {
-  const { id } = useParams()
-  const navigate = useNavigate()
+  const { id } = useParams();
+  const navigate = useNavigate();
 
-  const user = useBoundStore(state => state.user)
+  const user = useBoundStore((state) => state.user);
 
   const { data: categories } = useQuery({
-    queryKey: ['product-categories'],
+    queryKey: ["product-categories"],
     queryFn: async () => {
-      const { data } = await window.apiCategory.getAllCategories()
-      return data
-    }
-  })
+      const { data } = await window.apiCategory.getAllCategories();
+      return data;
+    },
+  });
 
-  const { isPending, error, data } = useProductFetch({ id })
+  const { isPending, error, data } = useProductFetch({ id });
 
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   const { mutate, error: mutateError } = useSubmit({
     id,
     userId: user.id ?? 0,
     onNavigate: navigate,
-    onInvalidate:
-      queryClient.invalidateQueries({ queryKey: ['products'] })
-  })
+    onInvalidate: queryClient.invalidateQueries({ queryKey: ["products"] }),
+  });
 
-  const categoryOptions = categories?.map((cat) => ({ label: cat.name, value: String(cat.id) }))
+  const categoryOptions = categories?.map((cat) => ({
+    label: cat.name,
+    value: String(cat.id),
+  }));
 
   if (isPending) {
-    return <>Loading</>
+    return <>Loading</>;
   }
 
   if (error) {
-    return <Alert variant='danger'>{error.message}</Alert>
+    return <Alert variant="danger">{error.message}</Alert>;
   }
 
   return (
@@ -112,8 +113,11 @@ export default function Detail(): React.JSX.Element {
         onSubmit={mutate}
         key={id}
       >
-        <ProductDetailForm isNew={id === "new"} categoryOptions={categoryOptions} errorMessage={mutateError?.message} />
+        <ProductDetailForm
+          categoryOptions={categoryOptions}
+          errorMessage={mutateError?.message}
+        />
       </FormWrapper>
     </div>
-  )
+  );
 }
