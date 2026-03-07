@@ -78,7 +78,6 @@ export default function Detail(): ReactNode {
       > = [];
       for (const [key, value] of selectedItems) {
         const found = data.items.find((i) => i.id === Number(key));
-        console.log({ found });
 
         if (
           !found ||
@@ -105,7 +104,6 @@ export default function Detail(): ReactNode {
           sale_item_id: Number(key),
         });
       }
-      console.log("submitted items", items);
 
       const payload = {
         sale_id: Number(id),
@@ -133,8 +131,6 @@ export default function Detail(): ReactNode {
   });
 
   const handleToggleAll = (e): void => {
-    console.log({ checked: e.target.checked });
-
     const { checked } = e.target;
 
     if (data) {
@@ -160,7 +156,6 @@ export default function Detail(): ReactNode {
   };
 
   const handleToggleSelect = (id) => (e) => {
-    console.log({ id, checked: e.target.checked });
     const { checked } = e.target;
 
     const items = new Map(selectedItems);
@@ -172,7 +167,6 @@ export default function Detail(): ReactNode {
           newQty: data?.items?.find((item) => item.id === id)?.quantity ?? 0,
         })
       : items.delete(`${id}`);
-    console.log(items.size);
 
     if (items.size === data?.items.length && data?.items.length > 0) {
       if (!checked) {
@@ -207,25 +201,18 @@ export default function Detail(): ReactNode {
   if (!data) {
     return <Alert variant="danger">No Details for this Sales Invoice</Alert>;
   }
-  console.log("data", data);
 
   const settings: SettingsType | undefined = queryClient.getQueryData([
     "settings",
   ]);
   const handleDownloadPDF = async (): Promise<void> => {
     try {
-      console.log("Cached user data:", settings, settings?.logo);
-
       const res = await window.apiElectron.createPDF({
         ...data,
         logo: settings?.logo as string,
       });
 
       downloadblePDF({ res, invoiceNumber: data?.invoice_number });
-
-      // console.log('convert blob', new Blob([res], { type: 'application/pdf' }))
-
-      // console.log('res', res)
     } catch (error) {
       console.error(error);
     }
@@ -244,7 +231,6 @@ export default function Detail(): ReactNode {
     }
   };
 
-  console.log("selectedItems", selectedItems);
 
   return (
     <>
