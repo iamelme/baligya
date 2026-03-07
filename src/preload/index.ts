@@ -242,10 +242,12 @@ export const apiInventory = {
   getInventoryById: (
     params: InventoryMovementParams,
   ): Promise<{
-    data: {
-      productName: string;
-      movements: InventoryMovementReturn[] | null;
-    } | null;
+    data:
+      | (InventoryType & {
+          productName: string;
+          movements: InventoryMovementReturn[] | null;
+        })
+      | null;
     error: ErrorType;
   }> => ipcRenderer.invoke("inventory:getById", params),
   createInventory: (
