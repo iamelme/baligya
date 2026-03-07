@@ -293,6 +293,7 @@ export const apiElectron = {
     hashedPassword: string;
     password: string;
   }): Promise<boolean> => ipcRenderer.invoke("verify-password", params),
+  addBackUp: (): Promise<void> => ipcRenderer.invoke("save-db"),
 };
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
