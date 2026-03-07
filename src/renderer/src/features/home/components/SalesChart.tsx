@@ -3,13 +3,12 @@ import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  PointElement,
-  LineElement,
+  BarElement,
   Title,
   Tooltip,
   Legend,
-} from 'chart.js';
-import { Line } from 'react-chartjs-2';
+} from "chart.js";
+import { Bar } from "react-chartjs-2";
 import { getCurrentQuarterDates } from "@renderer/shared/utils";
 import { useQuery } from "@tanstack/react-query";
 import Alert from "@renderer/shared/components/ui/Alert";
@@ -19,84 +18,83 @@ import Card from "@renderer/shared/components/ui/Card";
 ChartJS.register(
   CategoryScale,
   LinearScale,
-  PointElement,
-  LineElement,
+  BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
 );
 
 export const options = {
   responsive: true,
   plugins: {
     legend: {
-      position: 'top' as const,
+      position: "top" as const,
     },
     title: {
       display: true,
-      text: 'Quarterly Sales'
+      text: "Current Quarterly Sales",
     },
   },
 };
 
 export default function SalesChart(): ReactNode {
-
-  const { start, end, months } = getCurrentQuarterDates()
+  const { start, end, months } = getCurrentQuarterDates();
 
   const { data, isPending, error } = useQuery({
-    queryKey: ['revenue-quarterly'],
+    queryKey: ["revenue-quarterly"],
     queryFn: async () => {
       const { data, error } = await window.apiSale.getRevenue({
         startDate: start.toISOString(),
         endDate: end.toISOString(),
-        isQuarterly: true
-      })
+        isQuarterly: true,
+      });
 
       if (error instanceof Error) {
-        throw new Error(error.message)
+        throw new Error(error.message);
       }
 
-      return data
-    }
-  })
-
+      return data;
+    },
+  });
 
   if (isPending) {
-    return <>Loading...</>
+    return <>Loading...</>;
   }
 
   if (error || !data) {
-    return <Alert variant="danger">{error?.message || 'something went wrong'}</Alert>
+    return (
+      <Alert variant="danger">{error?.message || "something went wrong"}</Alert>
+    );
   }
 
-
-  const normalizeData = Array.isArray(data) ? data : []
+  const normalizeData = Array.isArray(data) ? data : [];
 
   const d = {
     labels: months,
     datasets: [
       {
-        label: 'Net Sales',
-        data: monthSaleMapper({ months, data: normalizeData, key: 'net_revenue' }),
-        borderColor: 'oklch(72.3% 0.219 149.579)',
-        backgroundColor: 'oklch(96.2% 0.044 156.743)',
+        label: "Net Sales",
+        data: monthSaleMapper({
+          months,
+          data: normalizeData,
+          key: "net_revenue",
+        }),
+        borderColor: "oklch(51.1% 0.262 276.966)",
+        backgroundColor: "oklch(51.1% 0.262 276.966)",
       },
 
-      {
-        label: 'Total Returns',
-        data: monthSaleMapper({ months, data: normalizeData, key: 'total_return' }),
-        borderColor: 'oklch(63.7% 0.237 25.331)',
-        backgroundColor: 'oklch(93.6% 0.032 17.717)',
-      },
-    ]
-  }
+      // {
+      //   label: "Total Returns",
+      //   data: monthSaleMapper({
+      //     months,
+      //     data: normalizeData,
+      //     key: "total_return",
+      //   }),
+      //   borderColor: "oklch(63.7% 0.237 25.331)",
+      //   backgroundColor: "oklch(93.6% 0.032 17.717)",
+      // },
+    ],
+  };
 
-
-  return (
-    <Card
-      content={
-        <Line options={options} data={d} />
-      }
-    />
-  )
+  return <Card content={<Bar options={options} data={d} />} />;
 }
