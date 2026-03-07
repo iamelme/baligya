@@ -1,6 +1,7 @@
 import {
   ErrorType,
   PlaceOrderType,
+  ReturnRevenueType,
   ReturnSaleType,
   SaleItemType,
   SaleType,
@@ -44,25 +45,16 @@ export interface ISaleRepository {
     error: ErrorType;
   };
   getById(id: number): ReturnType;
+  // getTransactions(params: { startDate: string; endDate: string }): {
+  //   data: number[] | null;
+  //   error: ErrorType;
+  // };
   getRevenue(params: {
     startDate: string;
     endDate: string;
     isQuarterly?: boolean;
   }): {
-    data:
-      | {
-          month: number;
-          gross_revenue: number;
-          total_return: number;
-          net_revenue: number;
-        }
-      | {
-          month: number;
-          gross_revenue: number;
-          total_return: number;
-          net_revenue: number;
-        }[]
-      | null;
+    data: ReturnRevenueType | null;
     error: ErrorType;
   };
   getTopItems({
