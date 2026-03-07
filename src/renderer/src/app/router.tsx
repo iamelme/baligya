@@ -8,27 +8,25 @@ import Signup from "../features/auth/pages/Signup";
 import HomePage from "../features/home/pages";
 import POS from "../features/pos/pages";
 import CategoryPage from "../features/category/pages";
-import CategoryDetail from "../features/category/pages/Detail"
+import CategoryDetail from "../features/category/pages/Detail";
 import ProductPage from "../features/product/pages";
-import ProductDetail from "../features/product/pages/Detail"
+import ProductDetail from "../features/product/pages/Detail";
 
-import ProductVerifier from '../features/product/pages/Verifier'
-import InventoryPage from '../features/inventory/pages'
-import InventoryDetail from '../features/inventory/pages/Detail'
+import ProductVerifier from "../features/product/pages/Verifier";
+import InventoryPage from "../features/inventory/pages";
+import InventoryDetail from "../features/inventory/pages/Detail";
 
-import SalesPage from '../features/sales/pages'
-import SalesDetail from '../features/sales/pages/Detail'
+import SalesPage from "../features/sales/pages";
+import SalesDetail from "../features/sales/pages/Detail";
 
-import TopProductsPage from '../features/Reports/pages/Top'
+import TopProductsPage from "../features/Reports/pages/Top";
 
-import SettingsPage from '../features/settings/pages'
-import GeneralPage from '../features/settings/pages/General'
-import SettingsSystemPage from '../features/settings/pages/System'
+import SettingsPage from "../features/settings/pages";
+import GeneralPage from "../features/settings/pages/General";
+import SettingsSystemPage from "../features/settings/pages/System";
 
 export default function Router() {
-
   return (
-
     <HashRouter>
       <Routes>
         <Route path="/auth" element={<AuthPage />}>
@@ -67,7 +65,6 @@ export default function Router() {
             <Route path=":id" element={<SalesDetail />} />
           </Route>
 
-
           <Route path="reports">
             {/* <Route index element={<SalesPage />} /> */}
             <Route path="sales" element={<TopProductsPage />} />
@@ -77,10 +74,8 @@ export default function Router() {
             <Route index element={<GeneralPage />} />
             <Route path="system" element={<SettingsSystemPage />} />
           </Route>
-
         </Route>
       </Routes>
     </HashRouter>
-  )
+  );
 }
-
