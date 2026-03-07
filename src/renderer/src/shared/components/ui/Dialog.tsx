@@ -5,70 +5,76 @@ import {
   ReactNode,
   RefObject,
   useContext,
-  useRef
-} from 'react'
-import Button, { type ButtonProps } from './Button'
-import { twMerge } from 'tailwind-merge'
+  useRef,
+} from "react";
+import Button, { type ButtonProps } from "./Button";
+import { twMerge } from "tailwind-merge";
 
 type DialogContextType = {
-  dialogRef: RefObject<HTMLDialogElement | null>
-}
+  dialogRef: RefObject<HTMLDialogElement | null>;
+};
 
-const DialogContext = createContext<DialogContextType | null>(null)
+const DialogContext = createContext<DialogContextType | null>(null);
 
-export default function Dialog({ children }: { children: ReactNode }): ReactNode {
-  const dialogRef = useRef<HTMLDialogElement | null>(null)
+export default function Dialog({
+  children,
+}: {
+  children: ReactNode;
+}): ReactNode {
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
 
-  return <DialogContext value={{ dialogRef }}>{children}</DialogContext>
+  return <DialogContext value={{ dialogRef }}>{children}</DialogContext>;
 }
 
 const useDialogContext = (): DialogContextType => {
-  const ctx = useContext(DialogContext)
+  const ctx = useContext(DialogContext);
 
   if (!ctx) {
-    throw new Error('Component should be inside the context')
+    throw new Error("Component should be inside the context");
   }
 
-  return ctx
-}
+  return ctx;
+};
 
 function Trigger(
-  props: ButtonHTMLAttributes<HTMLButtonElement> & Omit<ButtonProps, 'children'>
+  props: ButtonHTMLAttributes<HTMLButtonElement> &
+    Omit<ButtonProps, "children">,
 ): ReactNode {
-  const { dialogRef } = useDialogContext()
+  const { dialogRef } = useDialogContext();
   const handleClick = (): void => {
+    console.log({ ref: dialogRef.current });
     if (dialogRef.current) {
-      console.log('dialog open')
       if (!dialogRef.current.open) {
-        dialogRef.current.showModal()
-        return
+        dialogRef.current.showModal();
+        return;
       }
-      dialogRef.current.close()
+      dialogRef.current.close();
     }
-  }
+  };
 
   return (
     <Button onClick={handleClick} {...props}>
       {props.children}
     </Button>
-  )
+  );
 }
 
 function Close(
-  props: ButtonHTMLAttributes<HTMLButtonElement> & Omit<ButtonProps, 'children'>
+  props: ButtonHTMLAttributes<HTMLButtonElement> &
+    Omit<ButtonProps, "children">,
 ): ReactNode {
-  const { dialogRef } = useDialogContext()
+  const { dialogRef } = useDialogContext();
   const handleClick = (): void => {
     if (dialogRef.current) {
-      dialogRef.current.close()
+      dialogRef.current.close();
     }
-  }
+  };
 
   return (
     <Button onClick={handleClick} type="button" {...props}>
       {props.children}
     </Button>
-  )
+  );
 }
 
 function Header({ children }: { children: ReactNode }): ReactNode {
@@ -76,33 +82,35 @@ function Header({ children }: { children: ReactNode }): ReactNode {
     <header className="flex justify-between py-4 px-3 border-b-1 border-slate-300">
       {children}
     </header>
-  )
+  );
 }
 
 function Body({ children }: { children: ReactNode }): ReactNode {
-  return <footer className="py-4 px-3">{children}</footer>
+  return <footer className="py-4 px-3">{children}</footer>;
 }
 
 function Footer({ children }: { children: ReactNode }): ReactNode {
   return (
-    <footer className="flex justify-end gap-x-2 p-3 border-t-1 border-slate-300">{children}</footer>
-  )
+    <footer className="flex justify-end gap-x-2 p-3 border-t-1 border-slate-300">
+      {children}
+    </footer>
+  );
 }
 
-type ContentProps = HTMLAttributes<HTMLDialogElement>
+type ContentProps = HTMLAttributes<HTMLDialogElement>;
 
 function Content({
   children,
   className,
   ...props
 }: ContentProps & { children: ReactNode }): ReactNode {
-  const { dialogRef } = useDialogContext()
+  const { dialogRef } = useDialogContext();
 
   const handleClose = (e: React.MouseEvent<HTMLDialogElement>): void => {
     if (e.target === dialogRef.current) {
-      dialogRef.current?.close()
+      dialogRef.current?.close();
     }
-  }
+  };
 
   return (
     <dialog
@@ -110,18 +118,18 @@ function Content({
       {...props}
       onClick={handleClose}
       className={twMerge(
-        'w-full backdrop:bg-slate-600 backdrop:opacity-50 backdrop:backdrop-blur-md m-auto rounded-md',
-        className
+        "w-full backdrop:bg-slate-600 backdrop:opacity-50 backdrop:backdrop-blur-md m-auto rounded-md",
+        className,
       )}
     >
       {children}
     </dialog>
-  )
+  );
 }
 
-Dialog.Trigger = Trigger
-Dialog.Header = Header
-Dialog.Body = Body
-Dialog.Footer = Footer
-Dialog.Content = Content
-Dialog.Close = Close
+Dialog.Trigger = Trigger;
+Dialog.Header = Header;
+Dialog.Body = Body;
+Dialog.Footer = Footer;
+Dialog.Content = Content;
+Dialog.Close = Close;
