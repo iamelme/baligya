@@ -2,7 +2,7 @@ import { app, shell, BrowserWindow, ipcMain, protocol, net } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import icon from "../../resources/icon.png?asset";
-import { AppDatabase } from "../renderer/src/database/db";
+import { AppDatabase } from "./database/db";
 import { CategoryRepository } from "../renderer/src/repository/CategoryRepository";
 import { ProductRepository } from "../renderer/src/repository/ProductRepository";
 import { InventoryRepository } from "../renderer/src/repository/InventoryRepository";
@@ -18,6 +18,7 @@ import verifyPassword from "./verifyPassword";
 import initializeLogo from "./initializeLogo";
 import { addBackUp } from "./addBackUp";
 import uploadLogo from "./uploadLogo";
+import runMigration from "./migrate";
 
 function createWindow(): void {
   // Create the browser window.
@@ -90,6 +91,7 @@ app.whenReady().then(() => {
   new ReturnRepository(db.db, inventory, sales);
 
   initializeLogo(db.db);
+  runMigration(db.db);
 
   addBackUp(db.db);
 
