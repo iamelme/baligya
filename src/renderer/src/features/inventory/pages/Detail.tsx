@@ -16,6 +16,7 @@ import DateFilter from "@renderer/shared/components/DateFilter";
 import Items from "@renderer/shared/components/Items";
 import { NumericFormat } from "react-number-format";
 import { movementType } from "@renderer/shared/utils/types";
+import { addDays, humanize } from "@renderer/shared/utils";
 import Dialog from "@renderer/shared/components/ui/Dialog";
 import Adjustment from "../components/Adjustment";
 
@@ -48,7 +49,8 @@ export default function Detail(): ReactNode {
 
   const { isPending, error, data } = useInventoryFetch({
     startDate: startDate && new Date(startDate).toISOString(),
-    endDate: endDate && new Date(endDate).toISOString(),
+    endDate: endDate && addDays(new Date(endDate), 1),
+
     pageSize,
     id,
     cursorId,
