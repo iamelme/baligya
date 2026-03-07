@@ -9,6 +9,7 @@ import { ReactNode, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import useBoundStore from "@renderer/shared/stores//boundStore";
 import Return from "../components/Return";
+import Badge from "@renderer/shared/components/ui/Badge";
 const headers = [
   { label: "Name", className: "" },
   { label: "Quantity", className: "text-right" },
@@ -231,6 +232,7 @@ export default function Detail(): ReactNode {
     }
   };
 
+  const returnable = data?.items?.every((item) => item.available_qty > 0);
 
   return (
     <>
@@ -252,7 +254,7 @@ export default function Detail(): ReactNode {
                 Download PDF
               </Button>
             </div>
-            {data?.status !== "void" && (
+            {data?.status !== "void" && returnable && (
               <Return
                 ref={refReturnBtn}
                 items={data.items}
@@ -276,17 +278,23 @@ export default function Detail(): ReactNode {
                 {mutationUpdateStatus.error?.message}
               </Alert>
             )}
-            <select
-              disabled={data.status === "void"}
-              defaultValue={data.status}
-              onChange={(e) => mutationUpdateStatus.mutate(e.target.value)}
-            >
-              {saleStatuses.map((status) => (
-                <option key={status.value} value={status.value}>
-                  {status.label}
-                </option>
-              ))}
-            </select>
+            {["void", "partial_return", "return"].find(
+              (status) => status === data?.status,
+            ) ? (
+              <Badge>{humanize(data.status)}</Badge>
+            ) : (
+              <select
+                key={data.status}
+                defaultValue={data.status}
+                onChange={(e) => mutationUpdateStatus.mutate(e.target.value)}
+              >
+                {saleStatuses.map((status) => (
+                  <option key={status.value} value={status.value}>
+                    {status.label}
+                  </option>
+                ))}
+              </select>
+            )}
           </p>
         </div>
       </div>
