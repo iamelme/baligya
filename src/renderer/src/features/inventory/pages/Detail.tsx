@@ -74,7 +74,7 @@ export default function Detail(): ReactNode {
         header={{
           left: {
             title: `${data?.productName}`,
-            subTitle: 'Inventory Movement'
+            subTitle: `Current stock: ${data?.quantity ?? 0}`,
           },
           right: (
             <>
