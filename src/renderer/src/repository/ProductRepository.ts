@@ -1,16 +1,21 @@
-import { IProductRepository, ReturnType } from '../interfaces/IProductRepository'
-import { CustomResponseType, Direction, InventoryType, ProductType } from '../shared/utils/types'
-import { ipcMain } from 'electron'
-import { Database, SqliteError } from 'better-sqlite3'
-import { IInventoryRepository } from '../interfaces/IInventoryRepository'
+import {
+  IProductRepository,
+  ReturnType,
+} from "../interfaces/IProductRepository";
+import {
+  CustomResponseType,
+  Direction,
+  InventoryType,
+  ProductType,
+} from "../shared/utils/types";
+import { ipcMain } from "electron";
+import { Database, SqliteError } from "better-sqlite3";
 
 export class ProductRepository implements IProductRepository {
-  private _database: Database
-  private _inventory: IInventoryRepository
+  private _database: Database;
 
-  constructor(database: Database, inventory: IInventoryRepository) {
-    this._database = database
-    this._inventory = inventory
+  constructor(database: Database) {
+    this._database = database;
     ipcMain.handle(
       'product:getAll',
       (_, params: { pageSize: number; cursorId: number; userId: number; direction?: Direction }) =>
