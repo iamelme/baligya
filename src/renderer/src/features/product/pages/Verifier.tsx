@@ -60,9 +60,9 @@ export default function Verifier(): React.ReactElement {
         ref={searchInputRef}
         onChange={(e) => setSearchTerm(e.target.value)}
       />
-      {data && (
+      {data?.results && (
         <Items
-          items={data}
+          items={data.results}
           headers={headers}
           renderItems={(item) => (
             <>
