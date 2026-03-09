@@ -1,64 +1,51 @@
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 
-import type { ReturnType } from '../utils/type'
-
+import { ReturnAllProductType } from "@renderer/interfaces/IProductRepository";
 
 type Params = {
-  userId?: number
-  pageSize: number
-  searchTerm: string
-  cursorIdParam: string | null
-  direction: string | null
-  onHasLastItem: (v: boolean) => void
-}
+  userId?: number;
+  pageSize: number;
+  searchTerm: string;
+  currentPage: number;
+};
 
-
-export default function useProductsFetch({ userId, pageSize, searchTerm, cursorIdParam, direction, onHasLastItem }: Params): UseQueryResult<ReturnType> {
+export default function useProductsFetch({
+  pageSize,
+  searchTerm,
+  currentPage,
+}: Params): UseQueryResult<ReturnAllProductType["data"]> {
   return useQuery({
-    queryKey: ['products', { search: searchTerm }, cursorIdParam, direction],
+    queryKey: [
+      "products",
+      { search: searchTerm },
+      String(pageSize),
+      String(currentPage),
+    ],
     queryFn: async (searchTerm) => {
-      console.log({ searchTerm })
-      if (!userId) {
-        throw new Error('User not found')
-      }
-
-      const term = searchTerm?.queryKey?.[1]?.search
-
-
-      console.log({ term })
+      const term = searchTerm?.queryKey?.[1]?.search;
 
       if (term) {
-        const { data } = await window.apiProduct.searchProduct(String(term))
-        return data
+        const { data, error } = await window.apiProduct.searchProduct(
+          String(term),
+        );
+
+        if (error instanceof Error) {
+          throw new Error(error.message);
+        }
+
+        return data;
       }
-
-      const cursorId = cursorIdParam ? Number(cursorIdParam) : 0
-
-      direction = direction ?? 'next'
 
       const { data, error } = await window.apiProduct.getAllProducts({
         pageSize,
-        cursorId: cursorId,
-        userId: Number(userId),
-        direction: direction as 'prev' | 'next'
-      })
+        offset: Number(currentPage) || 0,
+      });
 
       if (error instanceof Error) {
-        throw new Error(error.message)
+        throw new Error(error.message);
       }
 
-      if (!data) {
-        return null
-      }
-      onHasLastItem(false)
-
-      if (data.length > pageSize) {
-        onHasLastItem(true)
-        data.pop()
-      }
-
-      return direction == 'next' ? data : data?.toReversed()
-    }
-  })
-
+      return data;
+    },
+  });
 }

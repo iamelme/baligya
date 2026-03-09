@@ -19,6 +19,10 @@ import {
   InventoryMovementReturn,
 } from "../renderer/src/features/inventory/utils/types";
 import { SettingsType } from "../renderer/src/features/settings/utils/type";
+import {
+  GetAllParams,
+  ReturnAllProductType,
+} from "@renderer/interfaces/IProductRepository";
 
 // type ProdInventoryType = {
 //   id: number
@@ -185,21 +189,10 @@ export const apiCategory = {
 };
 
 export const apiProduct = {
-  getAllProducts: (params: {
-    pageSize: number;
-    cursorId: number;
-    userId: number;
-    direction?: "prev" | "next";
-  }): Promise<{
-    data: Array<
-      ProductType & {
-        inventory_id: number;
-        quantity: number;
-        category_name: string;
-      }
-    > | null;
-    error: ErrorType;
-  }> => ipcRenderer.invoke("product:getAll", params),
+  getAllProducts: (
+    params: Pick<GetAllParams, "pageSize" | "offset">,
+  ): Promise<ReturnAllProductType> =>
+    ipcRenderer.invoke("product:getAll", params),
   getProductById: (
     id: number,
   ): Promise<{ data: ProductType; error: ErrorType }> =>
@@ -216,14 +209,8 @@ export const apiProduct = {
     name: string,
   ): Promise<{ data: ProductType | null; error: ErrorType }> =>
     ipcRenderer.invoke("product:getByName", name),
-  searchProduct: (
-    term: string,
-  ): Promise<{
-    data: Array<
-      ProductType & { quantity: number; category_name: string }
-    > | null;
-    error: ErrorType;
-  }> => ipcRenderer.invoke("product:search", term),
+  searchProduct: (term: string): Promise<ReturnAllProductType> =>
+    ipcRenderer.invoke("product:search", term),
   createProduct: (params: Omit<ProductType, "id">) =>
     ipcRenderer.invoke("product:create", params),
   updateProduct: (params: ProductType & { user_id: number }) =>

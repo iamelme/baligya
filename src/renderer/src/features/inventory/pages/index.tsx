@@ -1,6 +1,5 @@
 import Items from "@renderer/shared/components/Items";
 import ListPage from "@renderer/shared/components/ListPage";
-import Pagination from "@renderer/shared/components/Pagination";
 import Input from "@renderer/shared/components/ui/Input";
 import Price from "@renderer/shared/components/ui/Price";
 import useBoundStore from "@renderer/shared/stores//boundStore";
@@ -8,6 +7,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import useProductsFetch from "../../product/hooks/useProductsFetch";
 import useDebounce from "@renderer/shared/hooks/useDebounce";
+import Pagination2 from "@renderer/shared/components/Pagination2";
+import Badge from "@renderer/shared/components/ui/Badge";
 
 const headers = [
   { label: "Name", className: "" },
@@ -19,8 +20,6 @@ const headers = [
   { label: "", className: "text-right" },
 ];
 
-const pageSize = 20;
-
 export default function InventoryPage(): React.JSX.Element {
   const user = useBoundStore((state) => state.user);
   const [searchTerm, setSearchTerm] = useState("");
@@ -28,8 +27,9 @@ export default function InventoryPage(): React.JSX.Element {
   const dataGridRef = useRef<HTMLTableElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [hasLastItem, setHasLastItem] = useState(false);
-  let dir = searchParams.get("dir");
+  const [pageSize, setPageSize] = useState(50);
+
+  const currentPage = Number(searchParams.get("currentPage")) || 0;
 
   useEffect(() => {
     function focusElem(): void {
@@ -53,9 +53,7 @@ export default function InventoryPage(): React.JSX.Element {
     pageSize,
     userId: user?.id,
     searchTerm: useDebounce(searchTerm),
-    cursorIdParam: searchParams.get("cursorId"),
-    direction: dir,
-    onHasLastItem: setHasLastItem,
+    currentPage,
   });
 
   return (
@@ -81,44 +79,56 @@ export default function InventoryPage(): React.JSX.Element {
         error={error}
       >
         <>
-          {data && (
+          {data?.results && (
             <>
               <Items
                 ref={dataGridRef}
-                items={data}
+                items={data.results}
                 headers={headers}
-                renderItems={(item) => (
-                  <>
-                    <td>
-                      <Link to={`/inventory/${item.id}`} tabIndex={-1}>
-                        {item.name}
-                      </Link>
-                    </td>
-                    <td>{item.sku}</td>
-                    <td>{item.code}</td>
-                    <td>
-                      <Link
-                        to={`/categories/${item.category_id}`}
-                        tabIndex={-1}
-                      >
-                        {item.category_name}
-                      </Link>
-                    </td>
-                    <td className="">{item.quantity}</td>
-                    <td className="text-right">
-                      <Price value={item.price} />
-                    </td>
-                  </>
-                )}
-              />
+                renderItems={(item) => {
+                  const { is_active: isActive } = item;
 
-              <Pagination
-                direction={dir}
-                firstId={data[0]?.id}
-                lastId={data[data.length - 1]?.id}
-                hasLastItem={hasLastItem}
+                  return (
+                    <>
+                      <td>
+                        <Link
+                          to={`/inventory/${item.inventory_id}`}
+                          tabIndex={-1}
+                        >
+                          {item.name}
+                        </Link>
+                      </td>
+                      <td>{item.sku}</td>
+                      <td>{item.code}</td>
+                      <td>
+                        <Link
+                          to={`/categories/${item.category_id}`}
+                          tabIndex={-1}
+                        >
+                          {item.category_name}
+                        </Link>
+                      </td>
+                      <td className="">{item.quantity}</td>
+                      <td className="text-right">
+                        <Price value={item.price} />
+                      </td>
+                      <td className="">
+                        <Badge variant={isActive ? "success" : "danger"}>
+                          {isActive ? "Active" : "Delete"}
+                        </Badge>
+                      </td>
+                    </>
+                  );
+                }}
+              />
+              <Pagination2
+                pageSize={pageSize}
+                paginateSize={5}
+                total={data.total}
                 searchParams={searchParams}
                 onSearchParams={setSearchParams}
+                currentPage={Number(currentPage) || 0}
+                onPageSize={setPageSize}
               />
             </>
           )}

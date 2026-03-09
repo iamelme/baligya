@@ -25,6 +25,7 @@ export type ProductType = {
   cost: number;
   code: number;
   quantity: number;
+  is_active: number;
   user_id: number | null;
   updated_by: number | null;
   category_id: number | null;
