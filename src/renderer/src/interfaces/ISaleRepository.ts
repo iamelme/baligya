@@ -26,20 +26,36 @@ export type TopItemsType = {
   net_quantity_sold: number;
 };
 
+export type ReturnAllType = {
+  data: {
+    total: number;
+    results: SaleType[] | null;
+  };
+  error: ErrorType;
+};
+
+export type GetAllParams = {
+  startDate: string;
+  endDate: string;
+  pageSize: number;
+  offset: number;
+  userId?: number;
+};
+
 export type Direction = "prev" | "next";
 
 export interface ISaleRepository {
-  getAll(params: {
-    startDate: string;
-    endDate: string;
-    pageSize: number;
-    cursorId: number;
-    userId: number;
-    direction?: Direction;
-  }): {
-    data: SaleType[] | null;
-    error: ErrorType;
-  };
+  getAll(
+    params: GetAllParams,
+    // {
+    //     startDate: string;
+    //     endDate: string;
+    //     pageSize: number;
+    //     cursorId: number;
+    //     userId: number;
+    //     direction?: Direction;
+    //   }
+  ): ReturnAllType;
   getByUserId(id: number): {
     data: (SaleType & { items: SaleItemType[] }) | null;
     error: ErrorType;

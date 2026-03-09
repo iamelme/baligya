@@ -1,5 +1,4 @@
 import Items from "@renderer/shared/components/Items";
-import Pagination from "@renderer/shared/components/Pagination";
 
 import Price from "@renderer/shared/components/ui/Price";
 import Alert from "@renderer/shared/components/ui/Alert";
@@ -11,9 +10,8 @@ import { ReactNode, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import ListPage from "@renderer/shared/components/ListPage";
 import DateFilter from "@renderer/shared/components/DateFilter";
-import { NumericFormat } from "react-number-format";
-import Input from "@renderer/shared/components/ui/Input";
 import Badge from "@renderer/shared/components/ui/Badge";
+import Pagination2 from "@renderer/shared/components/Pagination2";
 
 const headers = [
   { label: "Invoice No.", className: "" },
@@ -35,10 +33,12 @@ const StatusWrapper = ({
   switch (status) {
     case "complete":
       return <Badge variant="success">{children}</Badge>;
+    case "partial_return":
+      return <Badge variant="warning">{children}</Badge>;
     case "return":
       return <Badge>{children}</Badge>;
     default:
-      return <Badge>{children}</Badge>;
+      return <Badge variant="danger">{children}</Badge>;
   }
 };
 
@@ -47,67 +47,45 @@ export default function Sales(): ReactNode {
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [hasLastItem, setHasLastItem] = useState(false);
   const [pageSize, setPageSize] = useState(50);
 
   const [startDate, setStartDate] = useState<Date | string>("");
   const [endDate, setEndDate] = useState<Date | string>("");
 
-  let dir = searchParams.get("dir");
+  let currentPage = searchParams.get("currentPage");
 
   const normalizedStart = startDate ? new Date(startDate)?.toISOString() : "";
   const normalizedEnd = endDate ? addDays(new Date(endDate), 1) : "";
 
-  const {
-    data: sales,
-    isPending,
-    error,
-  } = useQuery({
+  const { data, isPending, error } = useQuery({
     queryKey: [
       "sales",
+      pageSize,
       normalizedStart,
       normalizedEnd,
       user.id,
-      searchParams.get("cursorId"),
-      pageSize,
-      dir,
+      searchParams.get("currentPage"),
     ],
-    queryFn: async (): Promise<SaleType[] | null> => {
+    queryFn: async (): Promise<{
+      total: number;
+      results: SaleType[] | null;
+    }> => {
       if (!user.id) {
         throw new Error("User not found");
       }
-
-      const cursorId = searchParams.get("cursorId")
-        ? Number(searchParams.get("cursorId"))
-        : 0;
-
-      dir = dir ?? "next";
 
       const { data, error } = await window.apiSale.getAll({
         startDate: normalizedStart,
         endDate: normalizedEnd,
         pageSize,
-        cursorId: cursorId,
-        userId: user.id,
-        direction: dir as "prev" | "next",
+        offset: Number(currentPage) || 0,
       });
 
       if (error instanceof Error) {
         throw new Error(error.message);
       }
 
-      if (!data) {
-        return null;
-      }
-
-      setHasLastItem(false);
-
-      if (data.length > pageSize) {
-        setHasLastItem(true);
-        data.pop();
-      }
-
-      return dir == "next" ? data : data?.toReversed();
+      return data;
     },
   });
 
@@ -118,6 +96,8 @@ export default function Sales(): ReactNode {
   if (error) {
     return <Alert variant="danger">{error.message}</Alert>;
   }
+
+  const { results: sales, total } = data;
 
   return (
     <>
@@ -179,38 +159,29 @@ export default function Sales(): ReactNode {
           )}
         </>
 
-        <div className="flex items-center justify-end gap-x-2">
-          <span>Per page</span>
-          <div className="w-[100px]">
-            <NumericFormat
-              defaultValue={pageSize}
-              customInput={Input}
-              onValueChange={(values) => {
-                const { floatValue } = values;
-
-                if (floatValue) {
-                  setSearchParams({
-                    ...searchParams,
-                    cursorId: "0",
-                  });
-                  setPageSize(floatValue);
-                }
-              }}
-            />
-          </div>
-        </div>
+        <div className="flex items-center justify-end gap-x-2"></div>
       </ListPage>
 
-      {sales && (
-        <Pagination
-          direction={dir}
-          firstId={sales[0]?.id}
-          lastId={sales[sales.length - 1]?.id}
-          hasLastItem={hasLastItem}
-          searchParams={searchParams}
-          onSearchParams={setSearchParams}
-        />
-      )}
+      <Pagination2
+        pageSize={pageSize}
+        paginateSize={3}
+        total={total}
+        searchParams={searchParams}
+        onSearchParams={setSearchParams}
+        currentPage={Number(currentPage) || 0}
+        onPageSize={setPageSize}
+      />
+
+      {
+        // <Pagination
+        //   direction={dir}
+        //   firstId={sales[0]?.id}
+        //   lastId={sales[sales.length - 1]?.id}
+        //   hasLastItem={hasLastItem}
+        //   searchParams={searchParams}
+        //   onSearchParams={setSearchParams}
+        // />
+      }
     </>
   );
 }

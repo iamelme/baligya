@@ -98,11 +98,15 @@ export const apiSale = {
     startDate: string;
     endDate: string;
     pageSize: number;
-    cursorId: number;
-    userId: number;
-    direction?: "prev" | "next";
-  }): Promise<{ data: SaleType[] | null; error: ErrorType }> =>
-    ipcRenderer.invoke("sale:getAll", params),
+    offset: number;
+    userId?: number;
+  }): Promise<{
+    data: {
+      total: number;
+      results: SaleType[] | null;
+    };
+    error: ErrorType;
+  }> => ipcRenderer.invoke("sale:getAll", params),
   getByUserId: (id: number): Promise<SaleReturnType> =>
     ipcRenderer.invoke("sale:getByUserId", id),
   getById: (id: number): Promise<SaleReturnType> =>
