@@ -34,6 +34,12 @@ export default function ProductDetailForm({
         options={categoryOptions ?? []}
         required
       />
+      <FormInput
+        type="checkbox"
+        name="is_active"
+        label="Active"
+        helpertext="Toggle products if it is active."
+      />
       {errorMessage && (
         <Alert variant="danger" className="mt-3">
           {errorMessage}
