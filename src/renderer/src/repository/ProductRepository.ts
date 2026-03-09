@@ -1,10 +1,11 @@
 import {
+  GetAllParams,
   IProductRepository,
+  ReturnAllProductType,
   ReturnType,
 } from "../interfaces/IProductRepository";
 import {
   CustomResponseType,
-  Direction,
   InventoryType,
   ProductType,
 } from "../shared/utils/types";
@@ -16,17 +17,8 @@ export class ProductRepository implements IProductRepository {
 
   constructor(database: Database) {
     this._database = database;
-    ipcMain.handle(
-      "product:getAll",
-      (
-        _,
-        params: {
-          pageSize: number;
-          cursorId: number;
-          userId: number;
-          direction?: Direction;
-        },
-      ) => this.getAll(params),
+    ipcMain.handle("product:getAll", (_, params: GetAllParams) =>
+      this.getAll(params),
     );
     ipcMain.handle("product:getById", (_, id: number) => this.getById(id));
     ipcMain.handle("product:getByCode", (_, code: number) =>
@@ -47,62 +39,88 @@ export class ProductRepository implements IProductRepository {
     ipcMain.handle("product:delete", (_, id: number) => this.delete(id));
   }
 
-  getAll(params: {
-    pageSize: number;
-    cursorId: number;
-    userId: number;
-    direction?: Direction;
-  }): {
-    data: Array<
-      ProductType & {
-        inventory_id: number;
-        quantity: number;
-        category_name: string;
-      }
-    > | null;
-    error: Error | "";
-  } {
-    const { cursorId, direction = "next", pageSize } = params;
+  getAll(params: GetAllParams): ReturnAllProductType {
+    const { pageSize, offset } = params;
     console.log(params);
 
     try {
       const db = this._database;
 
-      let stmt = `
-      SELECT p.*, i.id AS inventory_id, i.quantity, c.name as category_name
-        FROM products AS p
-        LEFT JOIN categories as c ON p.category_id = c.id
-        LEFT JOIN inventory as i ON p.id = i.product_id
-        WHERE p.is_active = 1 AND p.id > ?
-        LIMIT ?`;
+      // let stmt = `
+      // SELECT p.*, i.id AS inventory_id, i.quantity, c.name as category_name
+      //   FROM products AS p
+      //   LEFT JOIN categories as c ON p.category_id = c.id
+      //   LEFT JOIN inventory as i ON p.id = i.product_id
+      //   WHERE p.is_active = 1 AND p.id > ?
+      //   LIMIT ?`;
+      //
+      // if (direction === "prev") {
+      //   stmt = `
+      //    SELECT p.*, i.quantity, c.name as category_name
+      //   FROM products AS p
+      //   LEFT JOIN categories as c ON p.category_id = c.id
+      //   LEFT JOIN inventory as i ON p.id = i.product_id
+      //   WHERE p.is_active = 1 AND p.id < ?
+      //   ORDER BY id DESC
+      //   LIMIT ? `;
+      // }
+      //
 
-      if (direction === "prev") {
-        stmt = `
-         SELECT p.*, i.quantity, c.name as category_name
-        FROM products AS p
-        LEFT JOIN categories as c ON p.category_id = c.id
-        LEFT JOIN inventory as i ON p.id = i.product_id
-        WHERE p.is_active = 1 AND p.id < ?
-        ORDER BY id DESC
-        LIMIT ? `;
-      }
+      const stmt = db.prepare(`
+        SELECT
+          p.*,
+          i.id AS inventory_id,
+          i.quantity,
+          c.name as category_name
+        FROM
+          products AS p
+        LEFT JOIN
+          categories as c ON p.category_id = c.id
+        LEFT JOIN
+          inventory as i ON p.id = i.product_id
+        LIMIT :limit
+        OFFSET :offset
+        `);
 
-      const products = db.prepare(stmt).all(cursorId, pageSize + 1) as Array<
-        ProductType & {
-          inventory_id: number;
-          quantity: number;
-          category_name: string;
+      const stmtCount = db.prepare(`
+          SELECT
+            count
+          FROM
+            counter
+          WHERE
+            name = :name`);
+
+      const transaction = db.transaction(() => {
+        const products = stmt.all({
+          ...params,
+          limit: pageSize,
+          offset: offset ? offset * pageSize : offset,
+        }) as Array<
+          ProductType & {
+            inventory_id: number;
+            quantity: number;
+            category_name: string;
+          }
+        >;
+
+        console.log("products", products);
+
+        if (!products) {
+          throw new Error("Sorry no products");
         }
-      >;
 
-      console.log("products", products);
+        const total = stmtCount.get({ name: "products" }) as { count: number };
 
-      if (!products) {
-        throw new Error("Sorry no products");
-      }
+        return {
+          total: total.count,
+          results: products,
+        };
+      });
+
+      const res = transaction();
 
       return {
-        data: products,
+        data: res,
         error: "",
       };
     } catch (error) {
@@ -110,12 +128,18 @@ export class ProductRepository implements IProductRepository {
 
       if (error instanceof Error) {
         return {
-          data: null,
+          data: {
+            total: 0,
+            results: null,
+          },
           error: new Error("Something went wrong while retrieving products"),
         };
       }
       return {
-        data: null,
+        data: {
+          total: 0,
+          results: null,
+        },
         error: new Error("Something went wrong while retrieving products"),
       };
     }
@@ -265,54 +289,70 @@ export class ProductRepository implements IProductRepository {
     }
   }
 
-  search(term: string): {
-    data: Array<
-      ProductType & { quantity: number; category_name: string }
-    > | null;
-    error: Error | string;
-  } {
+  search(term: string): ReturnAllProductType {
     try {
       const normalizeTerm = term?.trim();
-      const products = this._database
-        .prepare(
-          `SELECT p.name, p.sku, p.code, p.price, c.name AS category_name, i.quantity
-        FROM products p
-          INNER JOIN products_fts pf ON p.id = pf.product_id
-          LEFT JOIN categories as c ON p.category_id = c.id
-          LEFT JOIN inventory as i ON p.id = i.product_id
-        WHERE
-          products_fts MATCH ?
-        AND p.is_active = 1
-        ORDER BY rank
-        LIMIT 10`,
-        )
-        .all(normalizeTerm) as Array<
-        ProductType & { quantity: number; category_name: string }
-      >;
 
-      console.log("normalize term", normalizeTerm);
+      const db = this._database;
 
-      console.log("search products", products);
+      const stmt = db.prepare(`
+          SELECT
+            p.name,
+            p.sku,
+            p.code,
+            p.price,
+            c.name AS category_name,
+            i.quantity
+          FROM products p
+            INNER JOIN products_fts pf ON p.id = pf.product_id
+            LEFT JOIN categories as c ON p.category_id = c.id
+            LEFT JOIN inventory as i ON p.id = i.product_id
+          WHERE
+            products_fts MATCH ?
+          ORDER BY rank
+          LIMIT 10`);
 
-      if (products.length) {
+      const transaction = db.transaction(() => {
+        const products = stmt.all(
+          normalizeTerm,
+        ) as ReturnAllProductType["data"]["results"];
+
+        console.log({ normalizeTerm });
+
+        if (!products) {
+          return {
+            total: 0,
+            results: null,
+          };
+        }
+
         return {
-          data: products,
-          error: "",
+          total: 0,
+          results: products,
         };
-      }
+      });
+
+      const res = transaction();
+
       return {
-        data: null,
+        data: res,
         error: "",
       };
     } catch (error) {
       if (error instanceof Error) {
         return {
-          data: null,
+          data: {
+            total: 0,
+            results: null,
+          },
           error: new Error("Something went wrong while searching the product"),
         };
       }
       return {
-        data: null,
+        data: {
+          total: 0,
+          results: null,
+        },
         error: new Error("Something went wrong while searching the product"),
       };
     }
