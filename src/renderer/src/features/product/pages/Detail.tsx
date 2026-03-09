@@ -17,6 +17,7 @@ const schema = z
     price: z.coerce.number(),
     cost: z.coerce.number(),
     code: z.coerce.number(),
+    is_active: z.coerce.number(),
     category_id: z.coerce.number().nullish(),
     inventory_id: z.coerce.number().nullish(),
   })
