@@ -23,7 +23,7 @@ import runMigration from "./migrate";
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 900,
+    width: 1024,
     height: 670,
     show: false,
     autoHideMenuBar: true,
