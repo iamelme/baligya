@@ -6,6 +6,8 @@ import {
   ReturnType,
   Direction,
   TopItemsType,
+  GetAllParams,
+  ReturnAllType,
 } from "../interfaces/ISaleRepository";
 import {
   ErrorType,
@@ -22,19 +24,8 @@ export class SaleRepository implements ISaleRepository {
   constructor(database: Database, inventory: IInventoryRepository) {
     this._database = database;
     this._inventory = inventory;
-    ipcMain.handle(
-      "sale:getAll",
-      (
-        _,
-        params: {
-          startDate: string;
-          endDate: string;
-          pageSize: number;
-          cursorId: number;
-          userId: number;
-          direction?: Direction;
-        },
-      ) => this.getAll(params),
+    ipcMain.handle("sale:getAll", (_, params: GetAllParams) =>
+      this.getAll(params),
     );
     ipcMain.handle("sale:getByUserId", (_, id: number) => this.getByUserId(id));
     ipcMain.handle("sale:getById", (_, id: number) => this.getById(id));
@@ -72,92 +63,76 @@ export class SaleRepository implements ISaleRepository {
       this.deleteAllItems(sale_id),
     );
   }
-  getAll(params: {
-    startDate: string;
-    endDate: string;
-    pageSize: number;
-    cursorId: number;
-    userId: number;
-    direction?: Direction;
-  }): {
-    data: SaleType[] | null;
-    error: Error | string;
-  } {
-    const {
-      startDate,
-      endDate,
-      cursorId,
-      userId,
-      direction = "next",
-      pageSize,
-    } = params;
-    console.log("repo currentId", params);
+
+  getAll(params: GetAllParams): ReturnAllType {
+    const { pageSize, offset } = params;
+
+    // console.log({ params });
+
+    const db = this._database;
 
     try {
-      const db = this._database;
-
-      let stmt = `
-        SELECT
+      const stmt = db.prepare(`
+         SELECT
           *
-        FROM
+         FROM
           sales
-        WHERE
-          user_id = ?
-          AND id > ?
-          AND
-          (? IS FALSE OR created_at >= ?)
-          AND
-          (? IS FALSE OR created_at <= ?)
-        LIMIT ?`;
+         WHERE
+          (:startDate IS FALSE OR created_at >= :startDate )
+          AND (:endDate IS FALSE OR created_at <= :endDate )
+         LIMIT :limit
+         OFFSET :offset
+        `);
 
-      if (direction === "prev") {
-        stmt = `
-        SELECT
-          *
-        FROM
-          sales
-        WHERE
-          user_id = ?
-          AND id > ?
-          AND
-          (? IS FALSE OR created_at >= ?)
-          AND
-          (? IS FALSE OR created_at <= ?)
-        ORDER BY id DESC
-        LIMIT ?`;
-      }
+      const stmtCount = db.prepare(`
+          SELECT
+            count
+          FROM
+            counter
+          WHERE
+            name = :name
+                                    `);
 
-      const sales = db
-        .prepare(stmt)
-        .all(
-          userId,
-          cursorId,
-          startDate,
-          startDate,
-          endDate,
-          endDate,
-          pageSize + 1,
-        ) as SaleType[];
+      const transaction = db.transaction(() => {
+        const sales = stmt.all({
+          ...params,
+          limit: pageSize,
+          offset: offset ? offset * pageSize : offset,
+        }) as SaleType[];
 
-      // console.log({ sales })
+        if (!sales) {
+          throw new Error("Sorry no sales");
+        }
 
-      if (!sales) {
-        throw new Error("Sorry no sales");
-      }
+        const total = stmtCount.get({ name: "sales" }) as { count: number };
+
+        return {
+          total: total.count,
+          results: sales,
+        };
+      });
+
+      const res = transaction();
 
       return {
-        data: sales,
+        data: res,
         error: "",
       };
     } catch (error) {
       if (error instanceof Error) {
         return {
-          data: null,
+          data: {
+            total: 0,
+            results: null,
+          },
           error: new Error("Something went wrong while retrieving the product"),
         };
       }
       return {
-        data: null,
+        data: {
+          total: 0,
+          results: null,
+        },
         error: new Error("Something went wrong while  retrieving the product"),
       };
     }
