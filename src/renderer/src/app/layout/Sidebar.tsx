@@ -110,14 +110,16 @@ export default function Sidebar({ onUpdateUser }: Props): React.JSX.Element {
           )}
         </h1>
         <Menu items={menu} />
-        <Menu items={menu2} />
       </div>
 
-      <div className="sticky left-0 bottom-0 bg-gray-900 py-2 px-4">
-        <Button variant="outline" onClick={() => onUpdateUser()} full>
-          <LogOut size={14} />
-          Logout
-        </Button>
+      <div className="sticky left-0 bottom-0 bg-gray-900 py-2">
+        <Menu items={menu2} />
+        <div className="px-4">
+          <Button variant="outline" onClick={() => onUpdateUser()} full>
+            <LogOut size={14} />
+            Logout
+          </Button>
+        </div>
       </div>
     </aside>
   );
