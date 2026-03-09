@@ -1,12 +1,15 @@
-basename=""
 ext="sql"
 n=1
+path="./src/main/migrations/"
+date=$(date +%Y-%m-%d)
+desc="${1:?Usage: $0 <description>}"
 
-while [[ -e "./src/main/migrations/$(printf "%05d_%s.%s" "$n" "$(date +%Y-%m-%d)" "$ext")" ]]; do
+while files=("${path}$(printf "%05d" "$n")_"*.${ext}); [[ -e "${files[0]}" ]]; do
   echo "${n}"
   ((n++))
+
 done
+  touch "${path}$(printf "%05d_%s_%s.%s" "$n" "$date" "$desc" "$ext")"
 
-touch "./src/main/migrations/$(printf "%05d_%s.%s" "$n" "$(date +%Y-%m-%d)" "$ext")"
+  echo "Done creating"
 
-echo "Done creating"
