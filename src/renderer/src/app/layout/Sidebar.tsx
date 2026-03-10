@@ -97,22 +97,26 @@ export default function Sidebar({ onUpdateUser }: Props): React.JSX.Element {
   });
 
   return (
-    <aside className="flex flex-col justify-between w-[200px] h-[100svh] overflow-auto bg-gray-900 border-r border-slate-200 text-slate-300">
-      <div>
-        <h1 className="sticky top-0 left-0 py-2 px-3">
+    <aside className="flex flex-col w-[240px] h-[100svh] bg-gray-900 border-r border-slate-200 text-slate-300">
+      <div className="shrink-0">
+        <h1 className=" py-2 px-3">
           {settings?.logo && (
-            <Link to="/">
+            <Link to="/" className="inline-block">
               <img
                 src={`elme-cute:///${settings.logo}?v=${Date.now()}`}
                 alt="logo"
+                className="max-w-[100px]"
               />
             </Link>
           )}
         </h1>
+      </div>
+
+      <div className="flex-1 overflow-y-auto min-h-0">
         <Menu items={menu} />
       </div>
 
-      <div className="sticky left-0 bottom-0 bg-gray-900 py-2">
+      <div className="shrink-0 bg-gray-900 py-2">
         <Menu items={menu2} />
         <div className="px-4">
           <Button variant="outline" onClick={() => onUpdateUser()} full>
