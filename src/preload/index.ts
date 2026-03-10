@@ -264,7 +264,7 @@ export const apiSettings = {
   ): Promise<{ success: boolean; error: ErrorType }> =>
     ipcRenderer.invoke("settings:update", params),
   addBackUp: (): Promise<void> => ipcRenderer.invoke("save-db"),
-  uploadBackUp: (): Promise<void> => ipcRenderer.invoke("upload-backup"),
+  uploadBackUp: (): Promise<boolean> => ipcRenderer.invoke("upload-backup"),
 };
 
 export const apiElectron = {
