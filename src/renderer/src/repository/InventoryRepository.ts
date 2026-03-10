@@ -12,6 +12,7 @@ import {
   ErrorType,
   Direction,
   CustomResponseType,
+  ProductType,
 } from "../shared/utils/types";
 import { ipcMain } from "electron";
 
@@ -261,17 +262,37 @@ export class InventoryRepository implements IInventoryRepository {
     const createdAt = new Date().toISOString();
 
     try {
+      const stmtProd = db.prepare(
+        `
+        SELECT
+          is_active
+        FROM
+          products
+        WHERE
+          id = ?
+        `,
+      );
       const inventory = db.prepare(
         `UPDATE inventory
           SET quantity = quantity + ?
           WHERE id = ?`,
       );
+
       const insertInvMv = db.prepare(
         `INSERT INTO inventory_movement (created_at, movement_type, reference_type, quantity, reference_id, product_id, user_id)
           VALUES(?, ?, ?, ?, ?, ?, ?)
         `,
       );
+
       const transaction = db.transaction(() => {
+        const product = stmtProd.get(product_id) as ProductType;
+
+        if (!product.is_active) {
+          throw new Error(
+            "This product is not active. Therefore it cannot be adjusted.",
+          );
+        }
+
         const res = inventory.run(quantity, id);
 
         if (!res.changes) {
@@ -309,7 +330,7 @@ export class InventoryRepository implements IInventoryRepository {
       if (error instanceof Error) {
         return {
           success: false,
-          error: errorMessage,
+          error: error,
         };
       }
       return {
