@@ -84,7 +84,11 @@ export default function Adjustment({
           label="Quantity"
           helpertext="To decrease the current stock. You need to put (-) negative sign"
         />
-        {error && <Alert variant="danger">{error.message}</Alert>}
+        {error && (
+          <Alert variant="danger" className="mb-3">
+            {error.message}
+          </Alert>
+        )}
         <Button type="submit">Submit</Button>
       </FormWrapper>
     </div>
