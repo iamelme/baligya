@@ -91,10 +91,10 @@ app.whenReady().then(() => {
   new SettingsRepository(appDb);
   new ReturnRepository(appDb, inventory, sales);
 
-  initializeLogo(appDb.db);
-  runMigration(appDb.db);
+  initializeLogo(appDb);
+  runMigration(appDb);
 
-  addBackUp(appDb.db);
+  addBackUp(appDb);
   uploadBackup(appDb);
 
   ipcMain.handle("get-locale", () => {

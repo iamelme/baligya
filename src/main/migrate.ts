@@ -1,22 +1,23 @@
 import fs from "fs";
 import { readdir, readFile } from "fs/promises";
 import { join } from "path";
-import { Database } from "better-sqlite3";
+import { AppDatabase } from "./database/db";
 
-export default function runMigration(db: Database) {
+export default function runMigration(db: AppDatabase) {
   const dir = join(process.cwd(), "./src/main/migrations");
   // console.log("env", process.env.NODE_ENV);
   // console.log("cwd", process.cwd());
   //
   // console.log({ dir });
 
-  db.exec(`
+  db.getDb().exec(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
       version INTEGER PRIMARY KEY
     )
   `);
 
   const getVersion = db
+    .getDb()
     .prepare("SELECT MAX(version) as v FROM schema_migrations")
     .get() as { v: number };
 
@@ -36,14 +37,14 @@ export default function runMigration(db: Database) {
           if (version > currentVersion) {
             const sql = await readFile(join(dir, file), "utf8");
 
-            db.exec("BEGIN");
-            db.exec(sql);
+            db.getDb().exec("BEGIN");
+            db.getDb().exec(sql);
 
-            db.prepare("INSERT INTO schema_migrations(version) VALUES (?)").run(
-              version,
-            );
+            db.getDb()
+              .prepare("INSERT INTO schema_migrations(version) VALUES (?)")
+              .run(version);
 
-            db.exec("COMMIT");
+            db.getDb().exec("COMMIT");
           }
         }
       } catch (err) {

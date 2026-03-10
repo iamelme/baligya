@@ -1,9 +1,9 @@
 import fs from "fs";
 import { app } from "electron";
 import { join } from "path";
-import { Database } from "better-sqlite3";
+import { AppDatabase } from "./database/db";
 
-export default function initializeLogo(db: Database) {
+export default function initializeLogo(db: AppDatabase) {
   const userDataPath = app.getPath("userData");
   const imagePath = join(userDataPath, "./assets/images");
 
@@ -17,7 +17,7 @@ export default function initializeLogo(db: Database) {
         fs.copyFile(source, dest, (err) => {
           if (err) throw err;
 
-          db.prepare(`UPDATE settings SET logo = ?`).run(dest);
+          db.getDb().prepare(`UPDATE settings SET logo = ?`).run(dest);
         });
       });
     }
