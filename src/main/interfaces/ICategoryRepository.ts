@@ -16,8 +16,13 @@ export type ReturnCatAllType = {
   error: Error | string;
 };
 
+export type GetAllParams = {
+  pageSize: number;
+  offset: number;
+};
+
 export interface ICategoryRepository {
-  getAll(): ReturnCatAllType;
+  getAll(params: GetAllParams): ReturnCatAllType;
   getById(id: number): ReturnType;
   getByName(name: string): ReturnType;
   create(name: string): CustomResponseType;
