@@ -1,26 +1,27 @@
 import { join } from "path";
 import Database, { type Database as DatabaseType } from "better-sqlite3";
-// import { type Database as DatabaseType, Database } from 'better-sqlite3'
 import { app } from "electron";
-
-// const dbPath =
-//   process.env.NODE_ENV === 'development'
-//     ? './demo_table.db'
-//     : join(process.resourcesPath, './demo_table.db')
-
-// export const db = new Database(dbPath)
-// db.pragma('journal_mode = WAL')
 
 export class AppDatabase {
   db: DatabaseType;
 
   constructor() {
-    const dbPath = join(app.getPath("userData"), "baligya.sqlite");
+    const dbPath = join(app.getPath("userData"), "baligya.db");
     console.log("dbpath", dbPath);
 
     this.db = new Database(dbPath);
     this.db.pragma("journal_mode = WAL");
     this.setUp();
+  }
+
+  getDb(): DatabaseType {
+    return this.db;
+  }
+
+  updateDb(newDb: DatabaseType) {
+    // console.log({ newDb });
+    this.db.close();
+    this.db = newDb;
   }
 
   setUp(): void {
