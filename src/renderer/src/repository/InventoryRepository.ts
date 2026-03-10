@@ -6,6 +6,7 @@ import {
 import {
   IInventoryRepository,
   ProductInventoryType,
+  ReturnInventoryByIdType,
 } from "../interfaces/IInventoryRepository";
 import {
   InventoryType,
@@ -103,12 +104,7 @@ export class InventoryRepository implements IInventoryRepository {
     }
   }
   getById(params: InventoryMovementParams): {
-    data:
-      | (InventoryType & {
-          productName: string;
-          movements: InventoryMovementReturn[] | null;
-        })
-      | null;
+    data: ReturnInventoryByIdType;
     error: ErrorType;
   } {
     try {
@@ -125,7 +121,7 @@ export class InventoryRepository implements IInventoryRepository {
       const db = this._database;
 
       let stmt = `
-            SELECT imv.*, p.name AS product_name, p.sku AS product_sku
+            SELECT imv.*, p.name AS product_name, p.sku AS product_sku, p.is_active AS product_is_active
             FROM inventory_movement AS imv
             LEFT JOIN products AS p ON p.id = imv.product_id
             LEFT JOIN inventory AS i ON i.product_id = imv.product_id
@@ -148,7 +144,7 @@ export class InventoryRepository implements IInventoryRepository {
 
       if (direction === "prev") {
         stmt = `
-            SELECT imv.*, p.name AS product_name, p.sku AS product_sku
+            SELECT imv.*, p.name AS product_name, p.sku AS product_sku, p.is_active AS product_is_active
             FROM inventory_movement AS imv
             LEFT JOIN products AS p ON p.id = imv.product_id
             LEFT JOIN inventory AS i ON i.product_id = imv.product_id
@@ -175,7 +171,12 @@ export class InventoryRepository implements IInventoryRepository {
           endDate,
           endDate,
           pageSize + 1,
-        ) as Array<InventoryMovementReturn & { product_name: string }>;
+        ) as Array<
+          InventoryMovementReturn & {
+            product_name: string;
+            product_is_active: number;
+          }
+        >;
 
         if (!movements) {
           throw new Error("Couldn't find an inventory.");
@@ -184,6 +185,7 @@ export class InventoryRepository implements IInventoryRepository {
         return {
           ...inventory,
           productName: movements?.[0]?.product_name ?? "",
+          productIsActive: movements?.[0]?.product_is_active ?? "",
           movements,
         };
       });
