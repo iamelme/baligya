@@ -114,7 +114,7 @@ export default function InventoryPage(): React.JSX.Element {
                       </td>
                       <td className="">
                         <Badge variant={isActive ? "success" : "danger"}>
-                          {isActive ? "Active" : "Delete"}
+                          {isActive ? "Active" : "Inactive"}
                         </Badge>
                       </td>
                     </>
