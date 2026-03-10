@@ -2,7 +2,7 @@
 // import FormWrapper from '@renderer/shared/components/form/FormWrapper'
 // import Alert from '@renderer/shared/components/ui/Alert'
 import Button from "@renderer/shared/components/ui/Button";
-// import { ProdInventoryType } from '@renderer/interfaces/IInventoryRepository'
+// import { ProdInventoryType } from '../../../../../interfaces/IInventoryRepository'
 // import useBoundStore from '@renderer/shared/stores//boundStore'
 // import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ReactNode, useRef, useState } from "react";
