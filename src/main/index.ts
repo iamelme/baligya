@@ -3,14 +3,14 @@ import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import icon from "../../resources/icon.png?asset";
 import { AppDatabase } from "./database/db";
-import { CategoryRepository } from "../renderer/src/repository/CategoryRepository";
-import { ProductRepository } from "../renderer/src/repository/ProductRepository";
-import { InventoryRepository } from "../renderer/src/repository/InventoryRepository";
-import { UserRepository } from "../renderer/src/repository/UserRepository";
-import { CartRepository } from "../renderer/src/repository/CartRepository";
-import { SaleRepository } from "../renderer/src/repository/SaleRepository";
-import { ReturnRepository } from "../renderer/src/repository/ReturnRepository";
-import { SettingsRepository } from "../renderer/src/repository/SettingsRepository";
+import { CategoryRepository } from "./repository/CategoryRepository";
+import { ProductRepository } from "./repository/ProductRepository";
+import { InventoryRepository } from "./repository/InventoryRepository";
+import { UserRepository } from "./repository/UserRepository";
+import { CartRepository } from "./repository/CartRepository";
+import { SaleRepository } from "./repository/SaleRepository";
+import { ReturnRepository } from "./repository/ReturnRepository";
+import { SettingsRepository } from "./repository/SettingsRepository";
 import createPDF from "./createInvoicePDF";
 import { ReturnSaleType } from "../renderer/src/shared/utils/types";
 import { hashPassword } from "./hashPassword";
@@ -19,6 +19,7 @@ import initializeLogo from "./initializeLogo";
 import { addBackUp } from "./addBackUp";
 import uploadLogo from "./uploadLogo";
 import runMigration from "./migrate";
+import uploadBackup from "./uploadBackup";
 
 function createWindow(): void {
   // Create the browser window.
@@ -78,22 +79,23 @@ app.whenReady().then(() => {
 
   electronApp.setAppUserModelId("com.electron");
 
-  const db = new AppDatabase();
+  const appDb = new AppDatabase();
 
-  const inventory = new InventoryRepository(db.db);
+  const inventory = new InventoryRepository(appDb);
 
-  new CategoryRepository(db.db);
-  new ProductRepository(db.db);
-  new UserRepository(db.db, hashPassword, verifyPassword);
-  new CartRepository(db.db);
-  const sales = new SaleRepository(db.db, inventory);
-  new SettingsRepository(db.db);
-  new ReturnRepository(db.db, inventory, sales);
+  new CategoryRepository(appDb);
+  new ProductRepository(appDb);
+  new UserRepository(appDb, hashPassword, verifyPassword);
+  new CartRepository(appDb);
+  const sales = new SaleRepository(appDb, inventory);
+  new SettingsRepository(appDb);
+  new ReturnRepository(appDb, inventory, sales);
 
-  initializeLogo(db.db);
-  runMigration(db.db);
+  initializeLogo(appDb.db);
+  runMigration(appDb.db);
 
-  addBackUp(db.db);
+  addBackUp(appDb.db);
+  uploadBackup(appDb);
 
   ipcMain.handle("get-locale", () => {
     return app.getLocale();
