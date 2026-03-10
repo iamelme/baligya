@@ -158,8 +158,6 @@ export default function Sales(): ReactNode {
             />
           )}
         </>
-
-        <div className="flex items-center justify-end gap-x-2"></div>
       </ListPage>
 
       <Pagination2
