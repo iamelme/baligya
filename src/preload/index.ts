@@ -166,7 +166,7 @@ export const apiReturn = {
 
 // Custom APIs for renderer
 export const apiCategory = {
-  getAllCategories: (): Promise<{ data: CategoryType[]; error: ErrorType }> =>
+  getAllCategories: (): Promise<ReturnCatAllType> =>
     ipcRenderer.invoke("category:getAll"),
   getCategoryById: (id: number): Promise<CategoryReturnType> =>
     ipcRenderer.invoke("category:getById", id),
@@ -233,12 +233,7 @@ export const apiInventory = {
   getInventoryById: (
     params: InventoryMovementParams,
   ): Promise<{
-    data:
-      | (InventoryType & {
-          productName: string;
-          movements: InventoryMovementReturn[] | null;
-        })
-      | null;
+    data: ReturnInventoryByIdType;
     error: ErrorType;
   }> => ipcRenderer.invoke("inventory:getById", params),
   createInventory: (
