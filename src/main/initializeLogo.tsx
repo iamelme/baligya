@@ -17,7 +17,17 @@ export default function initializeLogo(db: AppDatabase) {
         fs.copyFile(source, dest, (err) => {
           if (err) throw err;
 
-          db.getDb().prepare(`UPDATE settings SET logo = ?`).run(dest);
+          db.getDb()
+            .prepare(
+              `
+            INSERT INTO
+              settings
+            (key, value)
+            VALUES
+            (?, ?)
+          `,
+            )
+            .run("logo", dest);
         });
       });
     }

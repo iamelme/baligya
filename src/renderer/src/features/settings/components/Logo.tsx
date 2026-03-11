@@ -1,9 +1,10 @@
 import Alert from "@renderer/shared/components/ui/Alert";
 import Button from "@renderer/shared/components/ui/Button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 
 export default function Logo(): ReactNode {
+  const [timestamp, setTimestamp] = useState(Math.floor(Date.now() / 1000));
   const {
     data: settings,
     isPending,
@@ -25,14 +26,15 @@ export default function Logo(): ReactNode {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const res = await window.apiElectron.uploadLogo();
-      if (res) {
-        const { error } = await window.apiSettings.uploadLogo(res);
-
-        if (error instanceof Error) {
-          throw new Error(error?.message);
-        }
-      }
+      await window.apiElectron.uploadLogo();
+      setTimestamp(Math.floor(Date.now() / 1000));
+      // if (res) {
+      //   const { error } = await window.apiSettings.uploadLogo(res);
+      //
+      //   if (error instanceof Error) {
+      //     throw new Error(error?.message);
+      //   }
+      // }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["settings"] });
@@ -47,6 +49,8 @@ export default function Logo(): ReactNode {
     return <Alert variant="danger">{error.message}</Alert>;
   }
 
+  const logo = settings?.find((d) => d.key === "logo")?.value;
+
   return (
     <>
       <div className="grid grid-cols-7 gap-x-5">
@@ -58,13 +62,13 @@ export default function Logo(): ReactNode {
           </p>
         </div>
         <div className="col-span-4">
-          {settings.logo ? (
+          {logo ? (
             <div
               className="max-w-[200px] cursor-pointer"
               onClick={() => mutation.mutate()}
             >
               <img
-                src={`elme-cute:///${settings.logo}?v=${Date.now()}`}
+                src={`elme-cute:///${logo}?v=${timestamp}`}
                 alt="logo"
                 className="w-24 h-24 rounded-full aspect-square object-cover"
               />
