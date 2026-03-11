@@ -17,7 +17,7 @@ export default function HomePage(): ReactNode {
   }
 
   return (
-    <div>
+    <div className="py-4">
       <header className="mb-4">
         <h2 className="text-lg font-medium">
           Hey {user.user_name}! {isMorning ? <>&#9728;</> : <>&#127769;</>}{" "}

@@ -54,7 +54,7 @@ export default function Verifier(): React.ReactElement {
   }
 
   return (
-    <>
+    <div className="py-4">
       <Input
         placeholder="Search"
         ref={searchInputRef}
@@ -86,6 +86,6 @@ export default function Verifier(): React.ReactElement {
           )}
         />
       )}
-    </>
+    </div>
   );
 }
