@@ -9,7 +9,9 @@ export default function System(): ReactNode {
   return (
     <>
       <Info />
-      <DownloadBackup />
+      <div className="mb-5">
+        <DownloadBackup />
+      </div>
       <UploadBackup
         onHandleUploadDb={handleUploadDb}
         error={error instanceof Error ? error.message : ""}
