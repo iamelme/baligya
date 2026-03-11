@@ -236,7 +236,7 @@ export default function Detail(): ReactNode {
   const returnable = data?.items?.every((item) => item.available_qty > 0);
 
   return (
-    <>
+    <div className="py-4">
       <div className="flex justify-between">
         <div>
           <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
@@ -339,7 +339,7 @@ export default function Detail(): ReactNode {
       )}
 
       <div className="flex justify-end">
-        <div className="flex flex-col gap-y-2">
+        <div className="flex flex-col gap-y-2 [&_dt]:text-slate-400">
           <dl className="flex justify-between gap-x-4">
             <dt className="">Sub Total:</dt>
             <dd>
@@ -390,6 +390,6 @@ export default function Detail(): ReactNode {
           </dl>
         </div>
       </div>
-    </>
+    </div>
   );
 }
