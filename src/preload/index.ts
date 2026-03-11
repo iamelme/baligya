@@ -15,7 +15,7 @@ import {
   ReturnRevenueType,
 } from "../renderer/src/shared/utils/types";
 import { InventoryMovementParams } from "../renderer/src/features/inventory/utils/types";
-import { SettingsType } from "../renderer/src/features/settings/utils/type";
+
 import {
   GetAllParams,
   ReturnAllProductType,
@@ -26,6 +26,10 @@ import {
   GetAllParams as GetCatAllParams,
   ReturnCatAllType,
 } from "../main/interfaces/ICategoryRepository";
+import {
+  SettingsParamType,
+  SettingsType,
+} from "../main/interfaces/ISettingRepository";
 
 // type ProdInventoryType = {
 //   id: number
@@ -254,20 +258,26 @@ export const apiInventory = {
 };
 
 export const apiSettings = {
-  getSettings: (): Promise<{ data: SettingsType; error: ErrorType }> =>
-    ipcRenderer.invoke("settings:get"),
+  getSettings: (): Promise<{
+    data: SettingsType[] | null;
+    error: ErrorType;
+  }> => ipcRenderer.invoke("settings:get"),
   getBackuplogs: (): Promise<{
     data: { created_at: string; status?: string };
     error: ErrorType;
   }> => ipcRenderer.invoke("settings:getBackupLogs"),
-  updateLocale: (
-    locale: string,
+  // updateLocale: (
+  //   locale: string,
+  // ): Promise<{ success: boolean; error: ErrorType }> =>
+  //   ipcRenderer.invoke("settings:updateLocale", locale),
+  // uploadLogo: (logo: string): Promise<{ data: string; error: ErrorType }> =>
+  //   ipcRenderer.invoke("settings:uploadLogo", logo),
+  create: (
+    params: SettingsType,
   ): Promise<{ success: boolean; error: ErrorType }> =>
-    ipcRenderer.invoke("settings:updateLocale", locale),
-  uploadLogo: (logo: string): Promise<{ data: string; error: ErrorType }> =>
-    ipcRenderer.invoke("settings:uploadLogo", logo),
+    ipcRenderer.invoke("settings:create", params),
   update: (
-    params: Partial<SettingsType>,
+    params: Partial<SettingsParamType>,
   ): Promise<{ success: boolean; error: ErrorType }> =>
     ipcRenderer.invoke("settings:update", params),
   addBackUp: (): Promise<void> => ipcRenderer.invoke("save-db"),

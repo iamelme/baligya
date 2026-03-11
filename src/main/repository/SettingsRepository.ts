@@ -1,5 +1,8 @@
 import { AppDatabase } from "../database/db";
-import { SettingsType } from "../../renderer/src/features/settings/utils/type";
+import {
+  SettingsParamType,
+  SettingsType,
+} from "../interfaces/ISettingRepository";
 import {
   ISettingRepository,
   ReturnBackuplog,
@@ -14,26 +17,29 @@ export class SettingsRepository implements ISettingRepository {
 
     ipcMain.handle("settings:get", () => this.get());
     ipcMain.handle("settings:getBackupLogs", () => this.getBackuplog());
-    ipcMain.handle("settings:update", (_, params: Partial<SettingsType>) =>
+    ipcMain.handle("settings:update", (_, params: SettingsParamType) =>
       this.update(params),
     );
-    ipcMain.handle("settings:updateLocale", (_, locale: string) =>
-      this.updateLocale(locale),
+    ipcMain.handle("settings:create", (_, params: SettingsType) =>
+      this.create(params),
     );
-    ipcMain.handle("settings:uploadLogo", (_, logo: string) =>
-      this.uploadLogo(logo),
-    );
+    // ipcMain.handle("settings:updateLocale", (_, locale: string) =>
+    //   this.updateLocale(locale),
+    // );
+    // ipcMain.handle("settings:uploadLogo", (_, logo: string) =>
+    //   this.uploadLogo(logo),
+    // );
   }
 
   get(): {
-    data: SettingsType | null;
+    data: SettingsType[] | null;
     error: Error | string;
   } {
     try {
       const db = this._database.getDb();
       const settings = db
         .prepare(`SELECT * FROM settings`)
-        .get() as SettingsType;
+        .all() as SettingsType[];
       return {
         data: settings,
         error: "",
@@ -95,67 +101,54 @@ export class SettingsRepository implements ISettingRepository {
     }
   }
 
-  updateLocale(locale: string): {
+  // updateLocale(locale: string): {
+  //   success: boolean;
+  //   error: Error | string;
+  // } {
+  //   try {
+  //     const db = this._database.getDb();
+  //     db.prepare(
+  //       `
+  //           UPDATE
+  //           FROM settings
+  //           SET locale = ?
+  //           `,
+  //     ).run(locale);
+  //     return {
+  //       success: true,
+  //       error: "",
+  //     };
+  //   } catch (error) {
+  //     if (error instanceof Error) {
+  //       return {
+  //         success: false,
+  //         error: new Error("Something went wrong while saving the locale"),
+  //       };
+  //     }
+  //     return {
+  //       success: false,
+  //       error: new Error("Something went wrong while saving the locale"),
+  //     };
+  //   }
+  // }
+  //
+  create(params: SettingsType): {
     success: boolean;
     error: Error | string;
   } {
     try {
+      const { key, value } = params;
       const db = this._database.getDb();
-      db.prepare(
-        `
-            UPDATE
-            FROM settings
-            SET locale = ?
-            `,
-      ).run(locale);
-      return {
-        success: true,
-        error: "",
-      };
-    } catch (error) {
-      if (error instanceof Error) {
-        return {
-          success: false,
-          error: new Error("Something went wrong while saving the locale"),
-        };
-      }
-      return {
-        success: false,
-        error: new Error("Something went wrong while saving the locale"),
-      };
-    }
-  }
-
-  update(params: Partial<SettingsType>): {
-    success: boolean;
-    error: Error | string;
-  } {
-    try {
-      const db = this._database.getDb();
-
-      const columns: string[] = [];
-      const values: string[] = [];
-
-      console.log({ params });
-
-      Object.keys(params).forEach((key) => {
-        columns.push(`${key} = ?`);
-        values.push(params[key]);
-      });
 
       const stmt = `
-      UPDATE
-        settings
-        SET
+        INSERT INTO
+          settings
+        (key, value)
+        VALUES
+        (?, ?)
       `;
 
-      const query = `${stmt} ${columns.join(",")}`;
-
-      console.log({ query });
-
-      db.prepare(query).run(...values);
-
-      console.log(...values);
+      db.prepare(stmt).run(key, value);
 
       return {
         success: true,
@@ -177,40 +170,86 @@ export class SettingsRepository implements ISettingRepository {
     }
   }
 
-  uploadLogo(path: string): {
-    data: string;
+  update(params: SettingsParamType): {
+    success: boolean;
     error: Error | string;
   } {
     try {
-      console.log("here upload");
-
       const db = this._database.getDb();
-      db.prepare(
-        `
-            UPDATE settings
-            SET logo = ?
-            `,
-      ).run(path);
 
-      const res = this.get();
-      if (res.data) {
-        return {
-          data: res.data.logo,
-          error: "",
-        };
-      }
-      throw new Error("");
+      const newStmt = db.prepare(`
+        INSERT INTO
+          settings
+          (key, value)
+        VALUES(?, ?)
+        ON CONFLICT (key)
+        DO UPDATE SET
+          key = excluded.key,
+          value = ?
+      `);
+
+      const transaction = db.transaction(() => {
+        Object.keys(params).forEach((key) => {
+          newStmt.run(key, params[key], params[key]);
+        });
+      });
+
+      transaction();
+
+      return {
+        success: true,
+        error: "",
+      };
     } catch (error) {
+      console.log(error);
       if (error instanceof Error) {
         return {
-          data: "",
-          error: new Error("Something went wrong while saving the logo"),
+          success: false,
+          error: error.message,
         };
       }
+
       return {
-        data: "",
-        error: new Error("Something went wrong while saving the logo"),
+        success: false,
+        error: "Something wen't wrong",
       };
     }
   }
+
+  // uploadLogo(path: string): {
+  //   data: string;
+  //   error: Error | string;
+  // } {
+  //   try {
+  //     console.log("here upload");
+  //
+  //     const db = this._database.getDb();
+  //     db.prepare(
+  //       `
+  //           UPDATE settings
+  //           SET logo = ?
+  //           `,
+  //     ).run(path);
+  //
+  //     const res = this.get();
+  //     if (res.data) {
+  //       return {
+  //         data: res.data.logo,
+  //         error: "",
+  //       };
+  //     }
+  //     throw new Error("");
+  //   } catch (error) {
+  //     if (error instanceof Error) {
+  //       return {
+  //         data: "",
+  //         error: new Error("Something went wrong while saving the logo"),
+  //       };
+  //     }
+  //     return {
+  //       data: "",
+  //       error: new Error("Something went wrong while saving the logo"),
+  //     };
+  //   }
+  // }
 }
