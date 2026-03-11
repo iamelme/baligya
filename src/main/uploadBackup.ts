@@ -7,7 +7,7 @@ import Database from "better-sqlite3";
 import { AppDatabase } from "./database/db";
 
 export default function uploadBackup(db: AppDatabase) {
-  ipcMain.handle("upload-backup", async (): Promise<boolean> => {
+  ipcMain.handle("upload-backup", async (): Promise<boolean | undefined> => {
     const { canceled, filePaths } = await dialog.showOpenDialog({
       filters: [{ name: "Database", extensions: ["db"] }],
       properties: ["openFile"],
@@ -37,7 +37,5 @@ export default function uploadBackup(db: AppDatabase) {
         return false;
       }
     }
-
-    return false;
   });
 }
