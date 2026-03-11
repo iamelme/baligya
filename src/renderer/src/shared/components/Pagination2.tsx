@@ -33,7 +33,7 @@ export default function Pagination2({
   return (
     <div className="flex  justify-between">
       <div className="flex items-center gap-x-2">
-        <p>Showing 1 to</p>
+        <p className="text-slate-400">Showing 1 to</p>
         <div className="w-[100px]">
           <NumericFormat
             defaultValue={pageSize}
@@ -51,7 +51,7 @@ export default function Pagination2({
             }}
           />
         </div>
-        <p>of {total} results</p>
+        <p className="text-slate-400">of {total} results</p>
       </div>
 
       <nav>
