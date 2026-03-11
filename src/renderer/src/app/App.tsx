@@ -41,7 +41,7 @@ function App(): React.JSX.Element {
       <Sidebar
         onUpdateUser={() => updateUser({ id: undefined, user_name: undefined })}
       />
-      <main className="flex-1 p-4 bg-slate-50">
+      <main className="flex-1 px-4 bg-slate-50">
         <ErrorBoundary fallback={<div>Something went wrong</div>}>
           <Outlet />
         </ErrorBoundary>
