@@ -154,7 +154,7 @@ export default function POS(): ReactNode {
   }
 
   return (
-    <div className="flex min-h-full">
+    <div className="flex min-h-full py-4">
       <div className="flex-1">
         <form onSubmit={handleSubmit}>
           <Input autoFocus ref={inputRef} placeholder="" />
@@ -165,13 +165,15 @@ export default function POS(): ReactNode {
           )}
         </form>
         {data?.items && (
-          <CartItems
-            items={data.items}
-            btnUpdateQtyRef={btnUpdateQtyRef}
-            onBtnRef={setBtnRef}
-            onUpdateItemQty={mutationUpdateItemQty.mutate}
-            onRemoveItem={handleRemoveItem}
-          />
+          <div className="mt-6">
+            <CartItems
+              items={data.items}
+              btnUpdateQtyRef={btnUpdateQtyRef}
+              onBtnRef={setBtnRef}
+              onUpdateItemQty={mutationUpdateItemQty.mutate}
+              onRemoveItem={handleRemoveItem}
+            />
+          </div>
         )}
       </div>
 
