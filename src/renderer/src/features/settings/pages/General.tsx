@@ -10,7 +10,7 @@ import Logo from "../components/Logo";
 
 const schema = z.object({
   tax: z.coerce.number(),
-  is_tax_inclusive: z.coerce.number().default(1),
+  locale: z.string().default("en-PH"),
   is_redirect_to_sales: z.coerce.number().default(0),
 });
 

@@ -5,6 +5,12 @@ import Button from "@renderer/shared/components/ui/Button";
 export default function GeneralForm(): ReactNode {
   return (
     <>
+      <FormInput
+        name="locale"
+        label="Locale"
+        required
+        helpertext="This will be used for currency"
+      />
       <FormInput name="tax" label="Tax rate" required />
       {/*
 
