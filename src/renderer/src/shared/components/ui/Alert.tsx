@@ -7,6 +7,7 @@ const styles = {
     danger: "bg-red-200",
     warning: "bg-yellow-200",
     success: "bg-green-200",
+    info: "bg-blue-200",
   },
   size: {
     xs: "py-1 px-2 tx-xs",
