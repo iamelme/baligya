@@ -27,16 +27,7 @@ export class AppDatabase {
   setUp(): void {
     this.db.exec(
       `
-            CREATE TABLE IF NOT EXISTS settings(
-               id INTEGER PRIMARY KEY CHECK (id = 1),
-              locale TEXT DEFAULT 'en-PH',
-              logo TEXT,
-              tax INTEGER DEFAULT 0,
-              is_tax_inclusive INTEGER DEFAULT 1,
-              is_redirect_to_sales INTEGER DEFAULT 0
-            );
 
-            INSERT OR IGNORE INTO settings (id) VALUES(1);
 
             CREATE TABLE IF NOT EXISTS users(
               id INTEGER PRIMARY KEY AUTOINCREMENT,
