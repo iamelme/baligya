@@ -83,7 +83,7 @@ type Props = {
 };
 
 export default function Sidebar({ onUpdateUser }: Props): React.JSX.Element {
-  const { data: settings } = useQuery({
+  const { data, isPending } = useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
       const { data, error } = await window.apiSettings.getSettings();
@@ -96,14 +96,20 @@ export default function Sidebar({ onUpdateUser }: Props): React.JSX.Element {
     },
   });
 
+  if (isPending) {
+    return <>Loading...</>;
+  }
+
+  const logo = data?.find((d) => d.key === "logo")?.value;
+
   return (
     <aside className="flex flex-col w-[240px] h-[100svh] bg-gray-900 border-r border-slate-200 text-slate-300">
       <div className="shrink-0">
         <h1 className=" py-2 px-3">
-          {settings?.logo && (
+          {logo && (
             <Link to="/" className="inline-block">
               <img
-                src={`elme-cute:///${settings.logo}?v=${Date.now()}`}
+                src={`elme-cute:///${logo}?v=${Math.floor(Date.now() / 1000)}`}
                 alt="logo"
                 className="max-w-[100px]"
               />

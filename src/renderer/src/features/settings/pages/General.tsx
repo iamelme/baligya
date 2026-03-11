@@ -1,12 +1,12 @@
-import { ReactNode } from "react";
+import { ReactNode, useId } from "react";
 import FormWrapper from "@renderer/shared/components/form/FormWrapper";
 import z from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { SettingsType } from "../utils/type";
 import { useNavigate } from "react-router-dom";
 import Alert from "@renderer/shared/components/ui/Alert";
 import GeneralForm from "../components/GeneralForm";
 import Logo from "../components/Logo";
+import { SettingsParamType } from "../utils/type";
 
 const schema = z.object({
   tax: z.coerce.number(),
@@ -19,10 +19,15 @@ type ValuesType = z.infer<typeof schema>;
 export default function GeneralPage(): ReactNode {
   const navigate = useNavigate();
 
+  const id = useId();
   const queryClient = useQueryClient();
 
-  const { data, isPending, error } = useQuery({
-    queryKey: ["settings"],
+  const {
+    data: settings,
+    isPending,
+    error,
+  } = useQuery({
+    queryKey: [id, "settings"],
     queryFn: async () => {
       const { data, error } = await window.apiSettings.getSettings();
 
@@ -30,12 +35,20 @@ export default function GeneralPage(): ReactNode {
         throw new Error(error.message);
       }
 
-      return data;
+      const t = data?.reduce((acc, { key, value }) => {
+        if (value) {
+          acc[key] = Number(value) >= 0 ? Number(value) : value;
+        }
+
+        return acc;
+      }, {} as ValuesType);
+
+      return t;
     },
   });
 
   const mutation = useMutation({
-    mutationFn: async (data: Partial<SettingsType>) => {
+    mutationFn: async (data: Partial<SettingsParamType>) => {
       const { error } = await window.apiSettings.update(data);
       if (error instanceof Error) {
         throw new Error(error.message);
@@ -51,7 +64,7 @@ export default function GeneralPage(): ReactNode {
     return <>Loading...</>;
   }
 
-  if (error || !data) {
+  if (error || !settings) {
     return (
       <Alert variant="danger">
         {error?.message || "Something wen't wrong"}
@@ -63,7 +76,7 @@ export default function GeneralPage(): ReactNode {
     <>
       <Logo />
       <FormWrapper<ValuesType>
-        defaultValues={data}
+        defaultValues={settings}
         schema={schema}
         onSubmit={mutation.mutate}
       >
