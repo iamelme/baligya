@@ -45,7 +45,7 @@ export default function Items<T extends { id: string | number }>({
   }
 
   return (
-    <div className="my-6 w-full max-h-lvh overflow-y-auto">
+    <div className="">
       <table className="w-full border border-slate-100" ref={ref}>
         <thead>
           <tr className="sticky top-0 bg-white">
