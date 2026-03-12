@@ -199,7 +199,7 @@ export type SettingsType = {
   tax: number;
   is_tax_inclusive: number;
   is_redirect_to_sales: number;
-  is_print_silent;
+  is_print_silent: boolean;
 } & CompanyProfileType;
 
 export type CompanyProfileType = {
