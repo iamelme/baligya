@@ -113,10 +113,13 @@ export function downloadblePDF({
   document.body.removeChild(link);
 }
 
-export function arrKeyValueToObj(arr?: { key: string; value: string }[]) {
-  return arr?.reduce((acc, { key, value }) => {
-    acc[key] = value;
+export function arrKeyValueToObj<K extends string, V = string>(arr?: {key: K, value: V}[] | undefined) {
+  return arr?.reduce(
+    (acc, {key, value}) => {
+      acc[key] =value;
 
-    return acc;
-  }, {});
+      return acc;
+    },
+    {} as Record<K, V>,
+  );
 }
