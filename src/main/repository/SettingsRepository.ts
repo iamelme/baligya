@@ -1,5 +1,6 @@
 import { AppDatabase } from "../database/db";
 import {
+  ReturnSettingsType,
   SettingsParamType,
   SettingsType,
 } from "../interfaces/ISettingRepository";
@@ -31,15 +32,12 @@ export class SettingsRepository implements ISettingRepository {
     // );
   }
 
-  get(): {
-    data: SettingsType[] | null;
-    error: Error | string;
-  } {
+  get():  ReturnSettingsType {
     try {
       const db = this._database.getDb();
       const settings = db
         .prepare(`SELECT * FROM settings`)
-        .all() as SettingsType[];
+        .all() as ReturnSettingsType["data"];
       return {
         data: settings,
         error: "",

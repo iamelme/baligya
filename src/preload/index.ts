@@ -28,6 +28,7 @@ import {
   ReturnCatAllType,
 } from "../main/interfaces/ICategoryRepository";
 import {
+  ReturnSettingsType,
   SettingsParamType,
   SettingsType,
 } from "../main/interfaces/ISettingRepository";
@@ -263,10 +264,7 @@ export const apiInventory = {
 };
 
 export const apiSettings = {
-  getSettings: (): Promise<{
-    data: SettingsType[] | null;
-    error: ErrorType;
-  }> => ipcRenderer.invoke("settings:get"),
+  getSettings: (): Promise<ReturnSettingsType> => ipcRenderer.invoke("settings:get"),
   getBackuplogs: (): Promise<{
     data: { created_at: string; status?: string };
     error: ErrorType;

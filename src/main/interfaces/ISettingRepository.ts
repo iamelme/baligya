@@ -14,8 +14,13 @@ export type SettingsParamType = {
   is_redirect_to_sales?: number;
 };
 
+export type ReturnSettingsType = {
+  data: { key: keyof SettingsType; value: string }[] | null
+  error: Error | string
+}
+
 export interface ISettingRepository {
-  get: () => { data: SettingsType[] | null; error: Error | string };
+  get: () => ReturnSettingsType;
   getBackuplog: () => ReturnBackuplog;
   // updateLocale: (locale: string) => { success: boolean; error: Error | string };
   // uploadLogo: (path: string) => { data: string; error: Error | string };
