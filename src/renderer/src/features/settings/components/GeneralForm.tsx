@@ -39,6 +39,13 @@ export default function GeneralForm(): ReactNode {
         label="Redirect to Sales Invoice"
         helpertext="After placing an order the page it will be redirected to sales invoice"
       />
+
+      <FormInput
+        type="checkbox"
+        name="is_print_silent"
+        label="Print in silent"
+        helpertext="No window will appear when printing."
+      />
       <Button type="submit">Submit</Button>
     </>
   );

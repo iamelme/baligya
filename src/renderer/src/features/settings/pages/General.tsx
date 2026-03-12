@@ -19,6 +19,7 @@ const schema = z.object({
   city: z.string(),
   zip: z.coerce.number("Must be a number"),
   phone: z.coerce.string(),
+  is_print_silent: z.coerce.number().default(0),
 });
 
 type ValuesType = z.infer<typeof schema>;
