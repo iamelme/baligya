@@ -137,7 +137,7 @@ export default class CustomerRepository implements ICustomerRepository {
           );
         }
 
-        const total = stmtCount.get({ name: "products" }) as { count: number };
+        const total = stmtCount.get({ name: "customers" }) as { count: number };
 
         return {
           total: total?.count || 0,
