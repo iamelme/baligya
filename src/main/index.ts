@@ -24,6 +24,7 @@ import uploadLogo from "./uploadLogo";
 import runMigration from "./migrate";
 import uploadBackup from "./uploadBackup";
 import printInvoicePDF from "./printInvoicePDF";
+import CustomerRepository from "./repository/CustomerRepository";
 
 function createWindow(): void {
   // Create the browser window.
@@ -90,6 +91,7 @@ app.whenReady().then(() => {
   new CategoryRepository(appDb);
   new ProductRepository(appDb);
   new UserRepository(appDb, hashPassword, verifyPassword);
+  new CustomerRepository(appDb);
   new CartRepository(appDb);
   const sales = new SaleRepository(appDb, inventory);
   new SettingsRepository(appDb);

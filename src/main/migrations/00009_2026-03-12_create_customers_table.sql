@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS customers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  created_at DATETIME,
+  name TEXT NOT NULL,
+  address TEXT NOT NULL,
+  phone TEXT NOT NULL
+);

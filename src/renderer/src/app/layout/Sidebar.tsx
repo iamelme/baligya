@@ -9,6 +9,7 @@ import {
   Settings,
   ShoppingCart,
   TrendingUp,
+  Users,
 } from "react-feather";
 import Menu from "../../shared/components/Menu";
 import Button from "../../shared/components/ui/Button";
@@ -67,6 +68,11 @@ const menu = [
         icon: <TrendingUp size={14} />,
       },
     ],
+  },
+  {
+    label: "Customers",
+    to: `/customers`,
+    icon: <Users size={14} />,
   },
 ];
 
