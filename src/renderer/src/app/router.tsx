@@ -12,6 +12,9 @@ import CategoryDetail from "../features/category/pages/Detail";
 import ProductPage from "../features/product/pages";
 import ProductDetail from "../features/product/pages/Detail";
 
+import CustomerPage from "../features/customers/pages";
+import CustomerDetail from "../features/customers/pages/Detail";
+
 import ProductVerifier from "../features/product/pages/Verifier";
 import InventoryPage from "../features/inventory/pages";
 import InventoryDetail from "../features/inventory/pages/Detail";
@@ -48,6 +51,11 @@ export default function Router() {
           <Route path="categories">
             <Route index element={<CategoryPage />} />
             <Route path=":id" element={<CategoryDetail />} />
+          </Route>
+
+          <Route path="customers">
+            <Route index element={<CustomerPage />} />
+            <Route path=":id" element={<CustomerDetail />} />
           </Route>
 
           <Route path="products">
