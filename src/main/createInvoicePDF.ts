@@ -4,12 +4,16 @@ import { autoTable } from "jspdf-autotable";
 
 import { imageSize } from "image-size";
 
-import { ReturnSaleType } from "../renderer/src/shared/utils/types";
+import {
+  CompanyProfileType,
+  ReturnSaleType,
+} from "../renderer/src/shared/utils/types";
 import { join } from "path";
 import fs from "fs";
 
 export default function createPDF(
-  params: ReturnSaleType & { logo: string; locale: string; currency: string },
+  params: ReturnSaleType &
+    CompanyProfileType & { logo: string; locale: string; currency: string },
 ): ArrayBuffer {
   const {
     logo,
@@ -27,6 +31,12 @@ export default function createPDF(
     total,
     amount,
     method,
+    company_name,
+    address1,
+    state_province,
+    city,
+    zip,
+    phone,
   } = params;
 
   const Price = ({ value }: { value: number }) =>
@@ -76,11 +86,39 @@ export default function createPDF(
     const mimeType = "image/webp";
     const dataUri = `data:${mimeType};base64,${base64Image}`;
 
-    doc.addImage(dataUri, "WEBP", 15, 10, imgW, imgH);
+    doc.addImage(dataUri, "WEBP", 15, 15, imgW, imgH);
+    doc.setFontSize(10);
+    doc.setFont("Helvetica", "bold");
+    doc.text(String(company_name || ""), imgW + 15, 20);
+    doc.setFont("Helvetica", "normal");
+    doc.text(String(address1 || ""), imgW + 15, 25);
+    doc.text(
+      String(
+        `${state_province ?? ""} ${city ?? ""} ${Number(zip) || ""}` || "",
+      ),
+      imgW + 15,
+      30,
+    );
+    doc.text(String(phone || ""), imgW + 15, 35);
+  } else {
+    doc.setFontSize(10);
+    doc.setFont("Helvetica", "bold");
+    doc.text(String(company_name || ""), 15, 20);
+    doc.setFont("Helvetica", "normal");
+    doc.text(String(address1 || ""), 15, 25);
+    doc.text(
+      String(
+        `${state_province ?? ""} ${city ?? ""} ${Number(zip) || ""}` || "",
+      ),
+      15,
+      30,
+    );
+    doc.text(String(phone || ""), 15, 35);
   }
-
-  doc.text("Invoice No.", pageSize.width - 15, 10, { align: "right" });
+  doc.setFont("Helvetica", "bold");
+  doc.text("Invoice No.", pageSize.width - 15, 15, { align: "right" });
   doc.text(String(invoice_number), pageSize.width - 15, 20, { align: "right" });
+  doc.setFont("Helvetica", "normal");
   doc.setFontSize(10);
   doc.text(
     String(new Date(created_at).toLocaleString()),

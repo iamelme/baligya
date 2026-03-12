@@ -200,3 +200,13 @@ export type SettingsType = {
   is_tax_inclusive: number;
   is_redirect_to_sales: number;
 };
+
+export type CompanyProfileType = {
+  company_name: string;
+  address1: string;
+  address2?: string;
+  state_province: string;
+  city: string;
+  zip: string;
+  phone: string;
+};

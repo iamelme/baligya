@@ -2,7 +2,12 @@ import Items from "@renderer/shared/components/Items";
 import Alert from "@renderer/shared/components/ui/Alert";
 import Button from "@renderer/shared/components/ui/Button";
 import Price from "@renderer/shared/components/ui/Price";
-import { downloadblePDF, humanize, saleStatuses } from "@renderer/shared/utils";
+import {
+  arrKeyValueToObj,
+  downloadblePDF,
+  humanize,
+  saleStatuses,
+} from "@renderer/shared/utils";
 import { ReturnItemType } from "@renderer/shared/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ReactNode, useRef, useState } from "react";
@@ -205,17 +210,20 @@ export default function Detail(): ReactNode {
     return <Alert variant="danger">No Details for this Sales Invoice</Alert>;
   }
 
-  const settings: SettingsType[] | undefined = queryClient.getQueryData([
+  const settingsArr: SettingsType[] | undefined = queryClient.getQueryData([
     "settings",
   ]);
 
-  const logo = settings?.find((d) => d.key === "logo")?.value;
+  const settings = arrKeyValueToObj(settingsArr);
+
+  const logo = settings?.["logo"] ?? "";
 
   const handleDownloadPDF = async (): Promise<void> => {
     try {
       const res = await window.apiElectron.createPDF({
         ...data,
-        logo: logo ?? "",
+        ...settings,
+        logo: "",
       });
 
       downloadblePDF({ res, invoiceNumber: data?.invoice_number });
@@ -228,6 +236,7 @@ export default function Detail(): ReactNode {
     try {
       const res = await window.apiElectron.createPDF({
         ...data,
+        ...settings,
         logo: logo ?? "",
       });
 

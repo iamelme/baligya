@@ -12,7 +12,10 @@ import { SaleRepository } from "./repository/SaleRepository";
 import { ReturnRepository } from "./repository/ReturnRepository";
 import { SettingsRepository } from "./repository/SettingsRepository";
 import createPDF from "./createInvoicePDF";
-import { ReturnSaleType } from "../renderer/src/shared/utils/types";
+import {
+  CompanyProfileType,
+  ReturnSaleType,
+} from "../renderer/src/shared/utils/types";
 import { hashPassword } from "./hashPassword";
 import verifyPassword from "./verifyPassword";
 import initializeLogo from "./initializeLogo";
@@ -105,11 +108,12 @@ app.whenReady().then(() => {
     "create-pdf",
     (
       _,
-      params: ReturnSaleType & {
-        logo: string;
-        locale: string;
-        currency: string;
-      },
+      params: ReturnSaleType &
+        CompanyProfileType & {
+          logo: string;
+          locale: string;
+          currency: string;
+        },
     ) => {
       return createPDF(params);
     },

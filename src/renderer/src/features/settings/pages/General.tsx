@@ -12,6 +12,13 @@ const schema = z.object({
   tax: z.coerce.number(),
   locale: z.string().default("en-PH"),
   is_redirect_to_sales: z.coerce.number().default(0),
+  company_name: z.string(),
+  address1: z.string(),
+  address2: z.string().optional(),
+  state_province: z.string(),
+  city: z.string(),
+  zip: z.coerce.number("Must be a number"),
+  phone: z.coerce.string(),
 });
 
 type ValuesType = z.infer<typeof schema>;
