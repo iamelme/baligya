@@ -8,7 +8,8 @@ import {
   apiElectron,
   apiInventory,
   apiSettings,
-  apiProduct
+  apiProduct,
+  apiCustomer
 } from './index'
 
 declare global {
@@ -17,6 +18,7 @@ declare global {
     apiCart: typeof apiCart
     apiSale: typeof apiSale
     apiReturn: typeof apiReturn
+    apiCustomer: typeof apiCustomer
     apiUser: typeof apiUser
     apiCategory: typeof apiCategory
     apiProduct: typeof apiProduct

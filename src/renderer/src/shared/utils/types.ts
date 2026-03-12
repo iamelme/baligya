@@ -211,3 +211,11 @@ export type CompanyProfileType = {
   zip: string;
   phone: string;
 };
+
+export type CustomerType = {
+  id: number;
+  created_at: string;
+  name: string;
+  address: string;
+  phone: string;
+};

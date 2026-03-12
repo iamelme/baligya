@@ -13,6 +13,7 @@ import {
   ReturnType,
   ReturnItemType,
   ReturnRevenueType,
+  CustomerType,
 } from "../renderer/src/shared/utils/types";
 import { InventoryMovementParams } from "../renderer/src/features/inventory/utils/types";
 
@@ -30,6 +31,10 @@ import {
   SettingsParamType,
   SettingsType,
 } from "../main/interfaces/ISettingRepository";
+import {
+  ReturnAllCustomerType,
+  ReturnCustomerType,
+} from "src/main/interfaces/ICustomerRepository";
 
 // type ProdInventoryType = {
 //   id: number
@@ -285,6 +290,23 @@ export const apiSettings = {
     ipcRenderer.invoke("upload-backup"),
 };
 
+export const apiCustomer = {
+  create: (
+    params: Omit<CustomerType, "id" | "created_at">,
+  ): Promise<{ success: boolean; error: Error | string }> =>
+    ipcRenderer.invoke("customer:create", params),
+  getById: (id: number): Promise<ReturnCustomerType> =>
+    ipcRenderer.invoke("customer:getById", id),
+  getAll: (): Promise<ReturnAllCustomerType> =>
+    ipcRenderer.invoke("customer:getAll"),
+  update: (
+    params: Omit<CustomerType, "created_at">,
+  ): Promise<{ success: boolean; error: Error | string }> =>
+    ipcRenderer.invoke("customer:update", params),
+  delete: (id: number): Promise<{ success: boolean; error: Error | string }> =>
+    ipcRenderer.invoke("customer:delete", id),
+};
+
 export const apiElectron = {
   getLocale: (): Promise<string> => ipcRenderer.invoke("get-locale"),
   createPDF: (
@@ -312,6 +334,7 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld("apiSale", apiSale);
     contextBridge.exposeInMainWorld("apiReturn", apiReturn);
     contextBridge.exposeInMainWorld("apiUser", apiUser);
+    contextBridge.exposeInMainWorld("apiCustomer", apiCustomer);
     contextBridge.exposeInMainWorld("apiCategory", apiCategory);
     contextBridge.exposeInMainWorld("apiProduct", apiProduct);
     contextBridge.exposeInMainWorld("apiInventory", apiInventory);
