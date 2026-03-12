@@ -112,3 +112,11 @@ export function downloadblePDF({
   link.click();
   document.body.removeChild(link);
 }
+
+export function arrKeyValueToObj(arr?: { key: string; value: string }[]) {
+  return arr?.reduce((acc, { key, value }) => {
+    acc[key] = value;
+
+    return acc;
+  }, {});
+}
