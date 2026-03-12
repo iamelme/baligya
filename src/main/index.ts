@@ -23,6 +23,7 @@ import { addBackUp } from "./addBackUp";
 import uploadLogo from "./uploadLogo";
 import runMigration from "./migrate";
 import uploadBackup from "./uploadBackup";
+import printInvoicePDF from "./printInvoicePDF";
 
 function createWindow(): void {
   // Create the browser window.
@@ -119,43 +120,12 @@ app.whenReady().then(() => {
     },
   );
 
-  ipcMain.handle("print-pdf", async (_, arrayBuffer) => {
-    const printWin = new BrowserWindow({ show: false });
-
-    // Convert ArrayBuffer → base64 data URL
-    const base64 = Buffer.from(arrayBuffer).toString("base64");
-    const dataUrl = `data:application/pdf;base64,${base64}`;
-
-    await printWin.loadURL(dataUrl);
-
-    printWin.webContents.on("did-finish-load", () => {
-      // 4. Print
-      printWin.webContents.print(
-        {
-          silent: true,
-          printBackground: true,
-        },
-        (success, failureReason) => {
-          if (!success) console.error(failureReason);
-          printWin.close(); // Close the hidden printWindow
-        },
-      );
-    });
-
-    // // Wait for it to finish rendering
-    // await new Promise((resolve) =>
-    //   printWin.webContents.once("zoom-changed", resolve),
-    // );
-    //
-    // printWin.webContents.print(
-    //   { silent: true, printBackground: true },
-    //   (success, errorType) => {
-    //     console.log({ success });
-    //     if (!success) console.error("Print failed:", errorType);
-    //     printWin.close();
-    //   },
-    // );
-  });
+  ipcMain.handle(
+    "print-pdf",
+    (_, params: { arrayBuffer: ArrayBuffer; isSilent?: boolean }) => {
+      printInvoicePDF(params);
+    },
+  );
 
   ipcMain.handle("hash-password", async (_, password: string) => {
     return hashPassword(password);
