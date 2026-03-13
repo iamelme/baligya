@@ -89,8 +89,9 @@ function Discount(): ReactNode {
   return (
     <dl className="flex justify-between gap-x-3">
       <dt>Discount:</dt>
-      <dd data-testid="discount">
+      <dd>
         <NumericFormat
+          data-testid="discount-textfield"
           value={ctx.discount / 100}
           customInput={Input}
           onValueChange={(values) => {
