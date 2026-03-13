@@ -1,20 +1,20 @@
-import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
-import { resolve } from 'path';
-
+import { resolve } from "path";
 
 export default defineConfig({
   plugins: [react(), tsconfigPaths()],
   test: {
-    environment: 'jsdom'
+    globals: true,
+    environment: "jsdom",
   },
   esbuild: {
     drop: ["console", "debugger"],
   },
   resolve: {
     alias: {
-      '@renderer': resolve(__dirname, './src/renderer/src'),
-    }
+      "@renderer": resolve(__dirname, "./src/renderer/src"),
+    },
   },
-})
+});
