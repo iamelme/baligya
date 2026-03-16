@@ -2,10 +2,19 @@ import { createContext, ReactNode, useContext } from "react";
 import { NumericFormat } from "react-number-format";
 
 import Price from "@renderer/shared/components/ui/Price";
-import { ReturnCartType } from "@renderer/shared/utils/types";
 import Input from "@renderer/shared/components/ui/Input";
 
-type Summary = ReturnCartType & {
+type DataType = {
+  sub_total: number;
+  discount: number;
+  total: number;
+  vatable_sales: number;
+  vat_amount: number;
+  tax: number;
+  items?: { quantity: number }[];
+};
+
+type Summary = DataType & {
   handleDiscount: (v: number) => void;
 };
 
@@ -16,7 +25,7 @@ export default function Summary({
   onChangeDiscount,
   children,
 }: {
-  data: ReturnCartType;
+  data: DataType;
   onChangeDiscount: (v: number) => void;
   children: ReactNode;
 }): ReactNode {
@@ -55,6 +64,10 @@ const useSummaryContext = (): Summary => {
 
 function NoOfItems(): ReactNode {
   const ctx = useSummaryContext();
+
+  if (!ctx?.items) {
+    return null;
+  }
 
   const num = ctx?.items?.reduce((acc, cur) => (acc += cur.quantity), 0);
 
