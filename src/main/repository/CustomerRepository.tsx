@@ -3,6 +3,7 @@ import { CustomerType, ErrorType } from "@renderer/shared/utils/types";
 import {
   ICustomerRepository,
   ReturnAllCustomerType,
+  ReturnCustomerSearchType,
   ReturnCustomerType,
 } from "../interfaces/ICustomerRepository";
 import { AppDatabase } from "../database/db";
@@ -19,8 +20,52 @@ export default class CustomerRepository implements ICustomerRepository {
     ipcMain.handle("customer:update", (_, params: CustomerType) =>
       this.update(params),
     );
+    ipcMain.handle("customer:search", (_, term: string) => this.search(term));
     ipcMain.handle("customer:delete", (_, id: number) => this.delete(id));
   }
+
+  search(term: string): ReturnCustomerSearchType {
+    try {
+      const db = this._database.getDb();
+
+      const stmt = db.prepare(
+        `
+        SELECT
+          *
+        FROM
+          customers
+        WHERE
+          name LIKE ?
+        `,
+      );
+
+      const customers = stmt.all(`${term}%`) as CustomerType[];
+
+      if (!customers) {
+        throw new Error(
+          "Something went wrong while searching for the customer",
+        );
+      }
+
+      return {
+        data: customers,
+        error: "",
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        return {
+          data: null,
+          error,
+        };
+      }
+
+      return {
+        data: null,
+        error: "Something wen't wrong while searching for the customer.",
+      };
+    }
+  }
+
   update(params: Omit<CustomerType, "created_at">): {
     success: boolean;
     error: ErrorType;

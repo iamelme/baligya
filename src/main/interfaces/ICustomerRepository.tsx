@@ -13,9 +13,15 @@ export type ReturnCustomerType = {
   error: ErrorType;
 };
 
+export type ReturnCustomerSearchType = {
+  data: CustomerType[] | null;
+  error: ErrorType;
+};
+
 export interface ICustomerRepository {
   getAll(): ReturnAllCustomerType;
   getById(id: number): ReturnCustomerType;
+  search(term: string): ReturnCustomerSearchType;
   create(params: Omit<CustomerType, "id" | "created_at">): {
     success: boolean;
     error: ErrorType;
