@@ -13,7 +13,7 @@ type HasCheckBox = {
 type ItemsProps<T extends { id: string | number }> = {
   items: T[] | undefined;
   headers: { label?: string; className?: string }[];
-  renderItems: (item: T) => ReactNode;
+  renderItems: (item: T, idx: number) => ReactNode;
   ref?: Ref<HTMLTableElement>;
 } & (
   | HasCheckBox
@@ -88,7 +88,7 @@ export default function Items<T extends { id: string | number }>({
                   />
                 </td>
               )}
-              {renderItems(item)}
+              {renderItems(item, idx)}
             </tr>
           ))}
         </tbody>
