@@ -5,8 +5,6 @@ import useBoundStore from "../shared/stores/boundStore";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 function App(): React.JSX.Element {
   // const updateLocale = useBoundStore((state) => state.updateLocale);
@@ -45,7 +43,6 @@ function App(): React.JSX.Element {
         <ErrorBoundary fallback={<div>Something went wrong</div>}>
           <Outlet />
         </ErrorBoundary>
-        <ToastContainer />
       </main>
     </div>
   );
