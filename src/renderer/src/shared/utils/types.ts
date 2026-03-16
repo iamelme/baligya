@@ -219,3 +219,33 @@ export type CustomerType = {
   address: string;
   phone: string;
 };
+
+export type SalesOrderType = {
+  id: number;
+  created_at: string;
+  due_at: string;
+  order_number: string;
+  status: "draft" | "confirmed" | "fulfilled" | "complete" | "cancelled";
+  sub_total: number;
+  discount: number;
+  total: number;
+  vatable_sales: number;
+  vat_amount: number;
+  tax: number;
+  notes: string;
+  customer_id: number | null;
+  user_id: number;
+};
+
+export type SalesOrderItemType = {
+  id: number;
+  created_at: string;
+  quantity: number;
+  unit_price: number;
+  unit_cost: number;
+  discount: number;
+  line_total: number;
+  product_id: number;
+  sales_order_id: number;
+  user_id: number;
+};
