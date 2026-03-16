@@ -1,31 +1,44 @@
-import { ChangeEvent, InputHTMLAttributes, ReactNode, useEffect, useState } from 'react'
-import { useFloating, useFocus, useInteractions } from '@floating-ui/react'
-import Input from './Input'
-import useComboboxContext, { ComboboxContext } from '../../../context/useComboboxContext'
-import { twMerge } from 'tailwind-merge'
+import {
+  ChangeEvent,
+  InputHTMLAttributes,
+  ReactNode,
+  useEffect,
+  useState,
+} from "react";
+import { useFloating, useFocus, useInteractions } from "@floating-ui/react";
+import Input from "./Input";
+import useComboboxContext, {
+  ComboboxContext,
+} from "../../../context/useComboboxContext";
+import { twMerge } from "tailwind-merge";
 
 type ComboboxProps = {
-  options: Record<string, string>[]
-  children: ReactNode
-}
+  isLoading?: boolean;
+  options: Record<string, string>[];
+  children: ReactNode;
+};
 
-export default function Combobox({ options, children }: ComboboxProps): React.ReactElement {
-  const [isOpen, setIsOpen] = useState(false)
+export default function Combobox({
+  isLoading,
+  options,
+  children,
+}: ComboboxProps): React.ReactElement {
+  const [isOpen, setIsOpen] = useState(false);
 
   const { refs, floatingStyles, context } = useFloating({
     open: isOpen,
-    onOpenChange: setIsOpen
-  })
+    onOpenChange: setIsOpen,
+  });
 
-  const [opt, setOpt] = useState(options)
+  const [opt, setOpt] = useState(options);
 
   useEffect(() => {
-    setOpt(options)
-  }, [options])
+    setOpt(options);
+  }, [options]);
 
-  const focus = useFocus(context)
+  const focus = useFocus(context);
 
-  const { getReferenceProps, getFloatingProps } = useInteractions([focus])
+  const { getReferenceProps, getFloatingProps } = useInteractions([focus]);
   return (
     <ComboboxContext
       value={{
@@ -60,6 +73,8 @@ function Search({ ...props }: InputHTMLAttributes<HTMLInputElement>): ReactNode 
     const filterOpt = options.filter((o) => o.label.toLowerCase().includes(value.toLowerCase()))
     setOpt(filterOpt)
   }
+    props?.onChange?.(e);
+  };
 
   return (
     <Input
