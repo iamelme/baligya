@@ -24,6 +24,11 @@ const menu = [
     icon: <Home size={14} />,
   },
   {
+    label: "Sales Order",
+    to: "/so",
+    icon: <ShoppingCart size={14} />,
+  },
+  {
     label: "POS",
     to: "/pos",
     icon: <ShoppingCart size={14} />,
