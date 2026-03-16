@@ -306,9 +306,11 @@ export class ProductRepository implements IProductRepository {
             p.name,
             p.sku,
             p.code,
+            p.cost,
             p.price,
             c.name AS category_name,
-            i.quantity
+            i.quantity,
+            p.id
           FROM products p
             INNER JOIN products_fts pf ON p.id = pf.product_id
             LEFT JOIN categories as c ON p.category_id = c.id
