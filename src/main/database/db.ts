@@ -75,10 +75,13 @@ export class AppDatabase {
               vatable_sales INTEGER DEFAULT 0,
               vat_amount INTEGER DEFAULT 0,
               tax INTEGER DEFAULT 0,
-              customer_name TEXT,
+              bill_to TEXT,
+              ship_to TEXT,
               status TEXT, -- in-progress, completed, refunded, voided
               user_id INTEGER,
-              FOREIGN KEY (user_id) REFERENCES users(id)
+              customer_id INTEGER,
+              FOREIGN KEY (user_id) REFERENCES users(id),
+              FOREIGN KEY (customer_id) REFERENCES customers(id)
             );
 
             CREATE TABLE IF NOT EXISTS sale_items(
