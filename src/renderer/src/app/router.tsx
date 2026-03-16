@@ -7,6 +7,10 @@ import App from "./App";
 import Signup from "../features/auth/pages/Signup";
 import HomePage from "../features/home/pages";
 import POS from "../features/pos/pages";
+
+import SO from "../features/salesOrders/pages";
+import SODetail from "../features/salesOrders/pages/Detail";
+
 import CategoryPage from "../features/category/pages";
 import CategoryDetail from "../features/category/pages/Detail";
 import ProductPage from "../features/product/pages";
@@ -48,6 +52,12 @@ export default function Router() {
         >
           <Route index element={<HomePage />} />
           <Route path="pos" element={<POS />} />
+
+          <Route path="so">
+            <Route index element={<SO />} />
+            <Route path=":id" element={<SODetail />} />
+          </Route>
+
           <Route path="categories">
             <Route index element={<CategoryPage />} />
             <Route path=":id" element={<CategoryDetail />} />
