@@ -35,6 +35,56 @@ export class SalesOrderRepository implements ISalesOrderRepository {
     ipcMain.handle("salesOrder:getById", (_, id: number) => this.getById(id));
   }
 
+  deleteItem(id: number): { success: boolean; error: Error | string } {
+    try {
+      const db = this._database.getDb();
+
+      const stmt = db.prepare(
+        `
+        DELETE FROM
+          sales_order_items
+        WHERE
+          id = ?
+        `,
+      );
+
+      console.log(stmt);
+
+      const transaction = db.transaction(() => {
+        const item = stmt.run(id);
+
+        console.log(item);
+
+        if (!item.changes) {
+          throw new Error(
+            "Something went wrong while deleting the sales order",
+          );
+        }
+
+        return true;
+      });
+
+      transaction();
+
+      return {
+        success: true,
+        error: "",
+      };
+    } catch (error) {
+      console.log("delete item", error);
+      console.error(
+        "error ==>",
+        error instanceof SqliteError,
+        error instanceof Error,
+      );
+
+      return {
+        success: false,
+        error: errorMapper(error),
+      };
+    }
+  }
+
   getAllItems(salesOrderId: number): ReturnAllSalesOrderItemType {
     {
       console.log(salesOrderId);
@@ -274,16 +324,43 @@ export class SalesOrderRepository implements ISalesOrderRepository {
 
         console.log("update salesOrderItems ", salesOrderItems);
 
-        for (const item of items) {
-          const found = salesOrderItems?.find((i) => i.id === item.id);
-          if (found) {
-            this.updateItem(item);
-          } else {
-            this.insertItem({
-              ...item,
-              user_id,
-              sales_order_id: id,
-            });
+        if (items.length < salesOrderItems.length) {
+          for (const item of salesOrderItems) {
+            const found = items?.find((i) => i.id === item.id);
+
+            if (!found) {
+              const { error } = this.deleteItem(item.id);
+              if (error instanceof Error) {
+                throw new Error(error.message);
+              }
+              continue;
+            }
+            const { error } = this.updateItem(item);
+
+            if (error instanceof Error) {
+              throw new Error(error.message);
+            }
+          }
+        } else {
+          for (const item of items) {
+            const found = salesOrderItems?.find((i) => i.id === item.id);
+            if (found) {
+              const { error } = this.updateItem(item);
+
+              if (error instanceof Error) {
+                throw new Error(error.message);
+              }
+            } else {
+              const { error } = this.insertItem({
+                ...item,
+                user_id,
+                sales_order_id: id,
+              });
+
+              if (error instanceof Error) {
+                throw new Error(error.message);
+              }
+            }
           }
         }
         return true;
