@@ -79,4 +79,9 @@ export interface ISalesOrderRepository {
     success: boolean;
     error: Error | string;
   };
+
+  deleteItem(id: number): {
+    success: boolean;
+    error: Error | string;
+  };
 }

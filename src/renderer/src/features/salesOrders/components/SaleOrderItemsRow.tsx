@@ -4,6 +4,8 @@ import { ReactNode } from "react";
 import { NumericFormat } from "react-number-format";
 import { ReturnSalesOrderType } from "src/main/interfaces/ISalesOrderRepository";
 import useUpdateData from "../hooks/useUpdateData";
+import Button from "@renderer/shared/components/ui/Button";
+import { Trash2 } from "react-feather";
 
 type Props = {
   index: number;
@@ -93,6 +95,21 @@ export default function SalesOrderItemsRow({
       </td>
       <td className="text-right">
         <Price value={item.line_total} />
+      </td>
+      <td className="text-right">
+        <Button
+          size="icon"
+          variant="outline"
+          onClick={() => {
+            onChange((prev) => {
+              const newItems = prev?.items?.filter((_, idx) => idx !== index);
+
+              return { items: newItems };
+            });
+          }}
+        >
+          <Trash2 size={14} />
+        </Button>
       </td>
     </>
   );
