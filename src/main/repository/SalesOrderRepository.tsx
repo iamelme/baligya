@@ -267,6 +267,9 @@ export class SalesOrderRepository implements ISalesOrderRepository {
       const transaction = db.transaction(() => {
         const salesOrderSelect = stmt.get(id) as SalesOrderType;
 
+        if (!salesOrderSelect) {
+          throw new Error("Order not found");
+        }
         //on this point user can only change status
 
         console.log(" salesOrderSelect", salesOrderSelect);
@@ -277,7 +280,7 @@ export class SalesOrderRepository implements ISalesOrderRepository {
           )
         ) {
           const salesOrder = stmtSalesOrderStatus.run(status, id);
-          console.log("salesOrder inside if", salesOrder);
+
           if (!salesOrder.changes) {
             throw new Error(
               "Something went wrong while updating the sales order",
@@ -312,7 +315,6 @@ export class SalesOrderRepository implements ISalesOrderRepository {
         //   notes,
         //   id,
         // );
-        console.log("outside if salesOrder", salesOrder);
 
         if (!salesOrder.changes) {
           throw new Error(
@@ -321,6 +323,12 @@ export class SalesOrderRepository implements ISalesOrderRepository {
         }
 
         const salesOrderItems = stmtItems.all(id) as SalesOrderItemType[];
+
+        if (!salesOrderItems) {
+          throw new Error(
+            "Something went wrong while updating the sales order",
+          );
+        }
 
         console.log("update salesOrderItems ", salesOrderItems);
 
@@ -363,6 +371,7 @@ export class SalesOrderRepository implements ISalesOrderRepository {
             }
           }
         }
+
         return true;
       });
 
