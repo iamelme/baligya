@@ -15,6 +15,7 @@ import {
   UpdateSalesOrderParams,
 } from "../interfaces/ISalesOrderRepository";
 import { ipcMain } from "electron/main";
+import { errorMapper } from "../utils";
 
 export class SalesOrderRepository implements ISalesOrderRepository {
   _database: AppDatabase;
@@ -74,21 +75,12 @@ export class SalesOrderRepository implements ISalesOrderRepository {
         };
       } catch (error) {
         console.log(error);
-        if (error instanceof Error) {
-          return {
-            data: {
-              total: 0,
-              results: null,
-            },
-            error: error,
-          };
-        }
         return {
           data: {
             total: 0,
             results: null,
           },
-          error: "Something went wrong while retrieving the sales order",
+          error: errorMapper(error),
         };
       }
     }
@@ -143,13 +135,7 @@ export class SalesOrderRepository implements ISalesOrderRepository {
       };
     } catch (error) {
       console.log("update item", error);
-      if (error instanceof Error) {
-        return { success: false, error: error };
-      }
-      return {
-        success: false,
-        error: "Something went wrong while saving the sales order",
-      };
+      return { success: false, error: errorMapper(error) };
     }
   }
 
@@ -315,14 +301,7 @@ export class SalesOrderRepository implements ISalesOrderRepository {
       };
     } catch (error) {
       console.log("update", error);
-      if (error instanceof Error) {
-        return { success: false, error: error };
-      }
-      if (error instanceof SqliteError) console.log("error here sqlite");
-      return {
-        success: false,
-        error: new Error("Something went wrong while updating the sales order"),
-      };
+      return { success: false, error: errorMapper(error) };
     }
   }
 
@@ -369,21 +348,12 @@ export class SalesOrderRepository implements ISalesOrderRepository {
       };
     } catch (error) {
       console.log(error);
-      if (error instanceof Error) {
-        return {
-          data: {
-            total: 0,
-            results: null,
-          },
-          error: error,
-        };
-      }
       return {
         data: {
           total: 0,
           results: null,
         },
-        error: "Something went wrong while retrieving the sales order",
+        error: errorMapper(error),
       };
     }
   }
@@ -451,12 +421,9 @@ export class SalesOrderRepository implements ISalesOrderRepository {
       };
     } catch (error) {
       console.log(error);
-      if (error instanceof Error) {
-        return { data: null, error: error };
-      }
       return {
         data: null,
-        error: "Something went wrong while retrieving the sales order",
+        error: errorMapper(error),
       };
     }
   }
@@ -522,13 +489,9 @@ export class SalesOrderRepository implements ISalesOrderRepository {
         error: "",
       };
     } catch (error) {
-      console.log(error);
-      if (error instanceof Error) {
-        return { success: false, error: error };
-      }
       return {
         success: false,
-        error: "Something went wrong while saving the sales order",
+        error: errorMapper(error),
       };
     }
   }
@@ -624,12 +587,9 @@ export class SalesOrderRepository implements ISalesOrderRepository {
       };
     } catch (error) {
       console.log(error);
-      if (error instanceof Error) {
-        return { success: false, error: error };
-      }
       return {
         success: false,
-        error: "Something went wrong while saving the sales order",
+        error: errorMapper(error),
       };
     }
   }
