@@ -34,6 +34,7 @@ import {
 } from "../main/interfaces/ISettingRepository";
 import {
   ReturnAllCustomerType,
+  ReturnCustomerSearchType,
   ReturnCustomerType,
 } from "src/main/interfaces/ICustomerRepository";
 import {
@@ -311,6 +312,8 @@ export const apiSalesOrder = {
 };
 
 export const apiCustomer = {
+  search: (term: string): Promise<ReturnCustomerSearchType> =>
+    ipcRenderer.invoke("customer:search", term),
   create: (
     params: Omit<CustomerType, "id" | "created_at">,
   ): Promise<{ success: boolean; error: Error | string }> =>
