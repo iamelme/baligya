@@ -144,12 +144,33 @@ export type ReturnSaleType = {
 };
 
 export type PlaceOrderType = {
-  cart: Omit<ReturnCartType, "id">;
+  // cart: Omit<ReturnCartType, "id">;
+  items: {
+    quantity: number;
+    product_id: number;
+    price: number;
+    cost: number;
+    user_id: number;
+  }[];
+
   amount: number;
+
+  sub_total: number;
+  discount: number;
+  vatable_sales: number;
+  vat_amount: number;
+  tax: number;
+  total: number;
+
   reference_number: string;
   method: string;
+  sales_order_id?: number | null;
   sale_id: number;
+  customer_id?: number | null;
   customer_name?: string;
+  bill_to?: string;
+  ship_to?: string;
+  status?: SaleType["status"];
   user_id: number;
 };
 
