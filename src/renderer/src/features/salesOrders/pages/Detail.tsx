@@ -5,19 +5,18 @@ import Input from "@renderer/shared/components/ui/Input";
 import ResultItems from "../components/ResultItems";
 import useBoundStore from "@renderer/shared/stores/boundStore";
 import { useParams } from "react-router-dom";
-import Button from "@renderer/shared/components/ui/Button";
 import Items from "@renderer/shared/components/Items";
 import useSalesOrderPage from "../hooks/useSalesOrderPage";
 import useUpdateData from "../hooks/useUpdateData";
 import Textarea from "@renderer/shared/components/ui/Textarea";
-import { headers, isStatusLocked, mapper, statusOptions } from "../utils";
+import { headers, isStatusLocked, mapper } from "../utils";
 import useCustomerSearch from "../hooks/useCustomerSearch";
 import Summary from "@renderer/features/pos/components/Summary";
 import SalesOrderItemsRow from "../components/SaleOrderItemsRow";
 import CustomerSearch from "../components/CustomerSearch";
-import Select from "@renderer/shared/components/ui/Select";
 import { SalesOrderType } from "@renderer/shared/utils/types";
 import { ReturnSalesOrderType } from "src/main/interfaces/ISalesOrderRepository";
+import Actions from "../components/Actions";
 
 export default function SalesOrder(): ReactNode {
   const { id } = useParams();
@@ -82,27 +81,11 @@ export default function SalesOrder(): ReactNode {
         <div>
           <Input
             type="date"
-            value={
-              salesOrder?.due_at
-                ? new Date(salesOrder.due_at).toISOString().split("T")[0]
-                : ""
-            }
-            onChange={(e) =>
-              onChange(() => ({ due_at: e.target.value.split("T")[0] }))
-            }
-          />
-        </div>
-
-        <div>
-          <Select
-            options={statusOptions}
             onChange={(e) =>
               onChange(() => ({
                 status: e.target.value as SalesOrderType["status"],
               }))
             }
-            value={salesOrder?.status}
-            disabled={isStatusLocked(initialData?.current?.status ?? "draft")}
           />
         </div>
       </div>
@@ -155,7 +138,12 @@ export default function SalesOrder(): ReactNode {
           )}
         </div>
       </div>
-      <Button onClick={onSave}>Save {id === "new" ? "as draft" : ""}</Button>
+      <div className="flex gap-x-3">
+        <Actions
+          status={id === "new" ? undefined : salesOrder?.status}
+          onSave={onSave}
+        />
+      </div>
     </>
   );
 }
