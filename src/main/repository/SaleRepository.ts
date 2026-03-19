@@ -653,16 +653,22 @@ WHERE
     try {
       const stmtSale = db.prepare(
         `
-          UPDATE sales
-          SET status = ?,
-          invoice_number = ?,
-          sub_total = ?,
-          discount = ?,
-          vatable_sales = ?,
-          vat_amount = ?,
-          total = ?,
-          customer_name = ?
-          WHERE id = ?
+          UPDATE
+            sales
+          SET
+            status = ?,
+            invoice_number = ?,
+            sub_total = ?,
+            discount = ?,
+            vatable_sales = ?,
+            vat_amount = ?,
+            total = ?,
+            customer_name = ?,
+            bill_to = ?,
+            ship_to = ?,
+            sales_order_id = ?
+          WHERE
+            id = ?
           `,
       );
 
@@ -675,9 +681,12 @@ WHERE
 
       const invStmt = db.prepare(
         `
-            UPDATE inventory
-            SET quantity = quantity - ?
-            WHERE product_id = ?
+            UPDATE
+              inventory
+            SET
+              quantity = quantity - ?
+            WHERE
+              product_id = ?
             `,
       );
 
