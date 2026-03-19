@@ -629,8 +629,24 @@ WHERE
     data: Pick<SaleType, "id"> | null;
     error: Error | string;
   } {
-    const { cart, amount, reference_number, method, user_id, customer_name } =
-      params;
+    const {
+      items,
+      sub_total,
+      discount,
+      vatable_sales,
+      vat_amount,
+      total,
+
+      amount,
+      reference_number,
+      method,
+      sales_order_id,
+      user_id,
+      customer_name,
+      bill_to = "",
+      ship_to = "",
+      status = "complete",
+    } = params;
     const createdAt = new Date().toISOString();
     const db = this._database.getDb();
 
@@ -694,18 +710,21 @@ WHERE
         const invoiceNo = String(saleId).padStart(8, "0");
 
         stmtSale.run(
-          "complete",
+          status,
           invoiceNo,
-          cart.sub_total,
-          cart.discount,
-          cart.vatable_sales,
-          cart.vat_amount,
-          cart.total,
+          sub_total,
+          discount,
+          vatable_sales,
+          vat_amount,
+          total,
           customer_name,
+          bill_to,
+          ship_to,
+          sales_order_id,
           saleId,
         );
 
-        for (const item of cart.items) {
+        for (const item of items) {
           const line_total = item.quantity * item.price;
 
           saleItemsStmt.run(
