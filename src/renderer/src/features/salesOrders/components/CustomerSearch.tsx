@@ -38,11 +38,16 @@ export default function CustomerSearch({
         />
         <Combobox.List
           onSelect={(value) =>
-            onChange(() => ({
-              customer_id: Number(value),
-              customer_name: customers?.find((c) => c.id === Number(value))
-                ?.name,
-            }))
+            onChange(() => {
+              const found = customers?.find((c) => c.id === Number(value));
+
+              return {
+                customer_id: Number(value),
+                customer_name: found?.name,
+                bill_to: found?.address ?? "",
+                ship_to: found?.address ?? "",
+              };
+            })
           }
         />
       </Combobox>
