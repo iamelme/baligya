@@ -95,7 +95,7 @@ app.whenReady().then(() => {
   new CustomerRepository(appDb);
   new CartRepository(appDb);
   const sales = new SaleRepository(appDb, inventory);
-  new SalesOrderRepository(appDb);
+  new SalesOrderRepository(appDb, sales);
   new SettingsRepository(appDb);
   new ReturnRepository(appDb, inventory, sales);
 
