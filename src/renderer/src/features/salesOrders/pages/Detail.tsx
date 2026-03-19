@@ -17,6 +17,7 @@ import SalesOrderItemsRow from "../components/SaleOrderItemsRow";
 import CustomerSearch from "../components/CustomerSearch";
 import { SalesOrderType } from "@renderer/shared/utils/types";
 import { ReturnSalesOrderType } from "src/main/interfaces/ISalesOrderRepository";
+import Mark from "../components/Mark";
 import Actions from "../components/Actions";
 
 export default function SalesOrder(): ReactNode {
@@ -92,19 +93,15 @@ export default function SalesOrder(): ReactNode {
         </div>
       </div>
 
-      <div className="mb-3">
-        <Input
-          defaultValue={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Search product..."
-        />
-        <ResultItems
-          items={data?.results}
-          onAddItem={(product) =>
-            onChange((prev) => ({
-              items: mapper(prev.items, product),
-            }))
-          }
+      <div className="flex gap-x-3 mb-3">
+        <Mark
+          initialData={{
+            bill_to: initialData.current?.bill_to ?? "",
+            ship_to: initialData.current?.ship_to ?? "",
+          }}
+          billTo={salesOrder?.bill_to}
+          shipTo={salesOrder?.ship_to}
+          onChange={onChange}
         />
       </div>
 
