@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import useProductSearch from "@renderer/features/product/hooks/useProductSearch";
 import useDebounce from "@renderer/shared/hooks/useDebounce";
 import { ChangeEvent, ReactNode, useRef, useState } from "react";
@@ -81,9 +82,10 @@ export default function SalesOrder(): ReactNode {
         <div>
           <Input
             type="date"
+            value={dayjs(salesOrder?.due_at).format("YYYY-MM-DD")}
             onChange={(e) =>
               onChange(() => ({
-                status: e.target.value as SalesOrderType["status"],
+                due_at: dayjs(e.target.value).format("YYYY-MM-DD"),
               }))
             }
           />
