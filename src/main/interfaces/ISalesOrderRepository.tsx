@@ -3,10 +3,7 @@ import {
   SalesOrderType,
 } from "@renderer/shared/utils/types";
 
-export type CreateSalesOrderParams = Omit<
-  UpdateSalesOrderParams,
-  "id" | "status"
->;
+export type CreateSalesOrderParams = Omit<UpdateSalesOrderParams, "id">;
 
 export type UpdateSalesOrderParams = Omit<SalesOrderType, "created_at"> & {
   items: UpdateSalesOrderItemsParams[];
