@@ -77,9 +77,12 @@ export class AppDatabase {
               tax INTEGER DEFAULT 0,
               bill_to TEXT,
               ship_to TEXT,
-              status TEXT, -- in-progress, completed, refunded, voided
+              notes TEXT,
+              status TEXT, -- unpaid, partial_paid, partial_return, completed, refunded, voided
+              sales_order_id INTEGER,
               user_id INTEGER,
               customer_id INTEGER,
+              FOREIGN KEY (sales_order_id) REFERENCES sales_order(id),
               FOREIGN KEY (user_id) REFERENCES users(id),
               FOREIGN KEY (customer_id) REFERENCES customers(id)
             );
