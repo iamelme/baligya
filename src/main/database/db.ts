@@ -75,6 +75,7 @@ export class AppDatabase {
               vatable_sales INTEGER DEFAULT 0,
               vat_amount INTEGER DEFAULT 0,
               tax INTEGER DEFAULT 0,
+              customer_name TEXT, -- retain the original customer's name even if the customer change in the db
               bill_to TEXT,
               ship_to TEXT,
               notes TEXT,
