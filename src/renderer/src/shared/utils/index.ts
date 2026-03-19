@@ -1,4 +1,5 @@
 export function humanize(str: string): string {
+  if (!str) return "";
   return str
     .replace(/^[\s_]+|[\s_]+$/g, "")
     .replace(/[-_\s]+/g, " ")
