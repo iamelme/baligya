@@ -19,6 +19,7 @@ import usePlaceOrder from "../hooks/usePlaceOrder";
 import { CartItemType, SettingsType } from "@renderer/shared/utils/types";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import { placeOrderMapper } from "../utils";
 
 export default function POS(): ReactNode {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -114,16 +115,9 @@ export default function POS(): ReactNode {
     }
 
     const saleId = await mutationPlaceOrder.mutateAsync({
-      cart: {
-        items: data.items,
-        sub_total: data.sub_total,
-        discount: data.discount,
-        vatable_sales: data.vatable_sales,
-        vat_amount: data.vat_amount,
-        tax: data.tax,
-        total: data.total,
-      },
+      ...placeOrderMapper({ data, userId: Number(user.id) }),
       amount: amount ?? 0,
+
       reference_number: inputRefNoRef.current
         ? inputRefNoRef.current.value
         : "",
