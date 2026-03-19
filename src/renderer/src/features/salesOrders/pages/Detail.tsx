@@ -18,6 +18,7 @@ import CustomerSearch from "../components/CustomerSearch";
 import { SalesOrderType } from "@renderer/shared/utils/types";
 import { ReturnSalesOrderType } from "src/main/interfaces/ISalesOrderRepository";
 import Mark from "../components/Mark";
+import Alert from "@renderer/shared/components/ui/Alert";
 import Actions from "../components/Actions";
 
 export default function SalesOrder(): ReactNode {
@@ -36,7 +37,7 @@ export default function SalesOrder(): ReactNode {
 
   const initialData = useRef<NonNullable<ReturnSalesOrderType["data"]>>(null);
 
-  const { salesOrder, onSave } = useSalesOrderPage({
+  const { salesOrder, onSave, errors } = useSalesOrderPage({
     id: String(id),
     userId: String(userId),
   });
@@ -137,6 +138,11 @@ export default function SalesOrder(): ReactNode {
           )}
         </div>
       </div>
+      {errors && (
+        <Alert variant="danger" className="mb-3">
+          {JSON.stringify(errors, null, 2)}
+        </Alert>
+      )}
       <div className="flex gap-x-3">
         <Actions
           status={id === "new" ? undefined : salesOrder?.status}
