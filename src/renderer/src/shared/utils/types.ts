@@ -252,8 +252,10 @@ export type SalesOrderType = {
   id: number;
   created_at: string;
   due_at: string;
-  order_number: string;
+  order_number?: string;
   status: "draft" | "confirmed" | "fulfilled" | "complete" | "cancelled";
+  bill_to: string;
+  ship_to: string;
   sub_total: number;
   discount: number;
   total: number;
