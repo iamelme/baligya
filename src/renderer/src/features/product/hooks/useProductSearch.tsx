@@ -1,5 +1,4 @@
-import { useQuery, UseQueryResult } from "@tanstack/react-query";
-import { ReturnAllProductType } from "../../../../../main/interfaces/IProductRepository";
+import { useQuery} from "@tanstack/react-query";
 
 type Params = {
   searchTerm: string | null;
@@ -7,7 +6,7 @@ type Params = {
 
 export default function useProductSearch({
   searchTerm,
-}: Params): UseQueryResult<ReturnAllProductType["data"]> {
+}: Params) {
   return useQuery({
     queryKey: ["product", { search: searchTerm }],
     queryFn: async (searchTerm) => {
