@@ -36,6 +36,12 @@ import {
   ReturnAllCustomerType,
   ReturnCustomerType,
 } from "src/main/interfaces/ICustomerRepository";
+import {
+  CreateSalesOrderParams,
+  ReturnAllSalesOrderType,
+  ReturnSalesOrderType,
+  UpdateSalesOrderParams,
+} from "src/main/interfaces/ISalesOrderRepository";
 
 // type ProdInventoryType = {
 //   id: number
@@ -289,6 +295,21 @@ export const apiSettings = {
     ipcRenderer.invoke("upload-backup"),
 };
 
+export const apiSalesOrder = {
+  create: (
+    params: CreateSalesOrderParams,
+  ): Promise<{ success: boolean; error: Error | string }> =>
+    ipcRenderer.invoke("salesOrder:create", params),
+  update: (
+    params: UpdateSalesOrderParams,
+  ): Promise<{ success: boolean; error: Error | string }> =>
+    ipcRenderer.invoke("salesOrder:update", params),
+  getAll: (): Promise<ReturnAllSalesOrderType> =>
+    ipcRenderer.invoke("salesOrder:getAll"),
+  getById: (id: number): Promise<ReturnSalesOrderType> =>
+    ipcRenderer.invoke("salesOrder:getById", id),
+};
+
 export const apiCustomer = {
   create: (
     params: Omit<CustomerType, "id" | "created_at">,
@@ -331,6 +352,7 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld("electron", electronAPI);
     contextBridge.exposeInMainWorld("apiCart", apiCart);
     contextBridge.exposeInMainWorld("apiSale", apiSale);
+    contextBridge.exposeInMainWorld("apiSalesOrder", apiSalesOrder);
     contextBridge.exposeInMainWorld("apiReturn", apiReturn);
     contextBridge.exposeInMainWorld("apiUser", apiUser);
     contextBridge.exposeInMainWorld("apiCustomer", apiCustomer);
