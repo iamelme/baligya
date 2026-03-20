@@ -19,6 +19,8 @@ export default function salesOrderQueryOptions(id: string) {
         created_at: new Date().toISOString(),
         due_at: new Date().toISOString(),
         order_number: "",
+        bill_to: "",
+        ship_to: "",
         status: "draft" as const,
         sub_total: 0,
         discount: 0,
