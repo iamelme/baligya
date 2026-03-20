@@ -12,7 +12,6 @@ export function mapper(
   >,
   item: ItemType,
 ) {
-  console.log("new add item from mapper", items, item);
   const base = {
     product_id: item.id,
     product_name: item.name,
@@ -49,6 +48,11 @@ export function mapper(
       },
     ];
   }
+
+  if (item.quantity <= found.quantity) {
+    return items;
+  }
+
   return items?.map((i) =>
     i.product_id === item.id
       ? {
