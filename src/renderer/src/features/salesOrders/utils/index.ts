@@ -73,6 +73,7 @@ export const headers = [
   { label: "Unit price", className: "text-right" },
   { label: "Discount", className: "text-right" },
   { label: "Line Total", className: "text-right" },
+  { label: "", className: "text-right" },
 ];
 
 export const statusOptions = [
