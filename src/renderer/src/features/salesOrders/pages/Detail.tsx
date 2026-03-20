@@ -67,6 +67,8 @@ export default function SalesOrder(): ReactNode {
     });
   };
 
+  const isLocked = isStatusLocked(initialData?.current?.status ?? "draft");
+
   return (
     <>
       <h3>Sales Order</h3>
@@ -106,20 +108,31 @@ export default function SalesOrder(): ReactNode {
         />
       </div>
 
-      <Items
-        headers={headers}
-        items={salesOrder?.items}
-        renderItems={(item, index) => (
-          <SalesOrderItemsRow
-            key={item.id || index}
-            item={item}
-            index={index}
-            onChange={onChange}
+      <div className="">
+        {!isLocked && (
+          <Input
+            defaultValue={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search product..."
+            className=""
           />
         )}
-      />
+        {data?.results && (
+          <div className="my-3">
+            <ResultItems
+              items={data?.results}
+              onAddItem={(product) =>
+                onChange((prev) => ({
+                  items: mapper(prev.items, product),
+                }))
+              }
+            />
+          </div>
+        )}
+      </div>
 
-      <div className="flex gap-x-3 justify-between">
+
+      <div className="flex gap-x-3 justify-between mb-3">
         <div className="flex-1 max-w-[50%]">
           <Textarea
             name="notes"
