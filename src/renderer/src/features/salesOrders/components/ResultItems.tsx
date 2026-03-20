@@ -12,8 +12,19 @@ export default function ResultItems({ items, onAddItem }: Props): ReactNode {
     <>
       {items?.map((item) => (
         <div key={item.id} className="flex justify-between">
-          {item.name} {item.category_name}
-          <Button onClick={() => onAddItem(item)}> Add </Button>
+          <p>
+            {item.name} {item.category_name} - <strong>Stock:</strong>
+            {item.quantity}
+          </p>
+          <Button
+            variant="outline"
+            size="xs"
+            disabled={item.quantity < 1}
+            onClick={() => onAddItem(item)}
+          >
+            {" "}
+            Add{" "}
+          </Button>
         </div>
       ))}
     </>
