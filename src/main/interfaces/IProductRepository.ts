@@ -15,6 +15,7 @@ export type ReturnAllProductType = {
       ProductType & {
         inventory_id: number;
         quantity: number;
+        available: number;
         category_name: string;
       }
     > | null;
