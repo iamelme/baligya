@@ -27,6 +27,7 @@ export type ReturnSalesOrderType = {
           SalesOrderItemType & {
             product_name: string;
             product_desc: string;
+            available: number;
           }
         >;
       })
