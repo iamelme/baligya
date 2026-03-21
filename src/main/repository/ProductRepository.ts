@@ -101,6 +101,7 @@ export class ProductRepository implements IProductRepository {
             inventory_id: number;
             quantity: number;
             category_name: string;
+            available: number;
           }
         >;
 
@@ -310,13 +311,25 @@ export class ProductRepository implements IProductRepository {
             p.price,
             c.name AS category_name,
             i.quantity,
+            COALESCE((i.quantity - COALESCE(ir.quantity, 0)), 0) AS available,
             p.id
           FROM products p
             INNER JOIN products_fts pf ON p.id = pf.product_id
-            LEFT JOIN categories as c ON p.category_id = c.id
-            LEFT JOIN inventory as i ON p.id = i.product_id
-          WHERE
-            products_fts MATCH ?
+            LEFT JOIN categories AS c ON p.category_id = c.id
+            LEFT JOIN inventory AS i ON p.id = i.product_id
+            LEFT JOIN (
+              SELECT
+                product_id,
+                SUM(quantity) AS quantity
+              FROM
+                inventory_reservation
+              WHERE
+                status = 'active'
+              GROUP BY
+                product_id
+              ) AS ir ON ir.product_id = p.id
+            WHERE
+              products_fts MATCH ?
           ORDER BY rank
           LIMIT 10`);
 
