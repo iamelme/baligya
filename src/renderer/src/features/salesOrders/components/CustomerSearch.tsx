@@ -5,6 +5,7 @@ import Combobox from "@renderer/shared/components/ui/Combobox";
 // import Combobox from "./Combobox";
 
 type Props = {
+  isLocked?: boolean;
   isLoading: boolean;
   customer?: string | null;
   customers?: CustomerType[] | null;
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export default function CustomerSearch({
+  isLocked,
   isLoading,
   customer,
   customers,
@@ -32,6 +34,7 @@ export default function CustomerSearch({
       >
         <Combobox.Input
           key={customer}
+          disabled={isLocked}
           defaultValue={customer ?? ""}
           onChange={(e) => onSearchCustomer(e.target.value)}
           placeholder="Search customer..."

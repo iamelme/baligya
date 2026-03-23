@@ -9,12 +9,14 @@ import { Trash2 } from "react-feather";
 
 type Props = {
   index: number;
+  isLocked: boolean;
   item: NonNullable<ReturnSalesOrderType["data"]>["items"][number];
   onChange: ReturnType<typeof useUpdateData>;
 };
 
 export default function SalesOrderItemsRow({
   index,
+  isLocked,
   item,
   onChange,
 }: Props): ReactNode {
@@ -23,39 +25,46 @@ export default function SalesOrderItemsRow({
       <td>{item.product_name}</td>
       <td>{item.product_desc}</td>
       <td>
-        <Input
-          type="number"
-          value={item.quantity}
-          min={1}
-          pattern="[1-9]+"
-          onChange={(e) =>
-            onChange((prev) => {
-              const { value } = e.target;
+        {isLocked ? (
+          item.quantity
+        ) : (
+          <Input
+            type="number"
+            value={item.quantity}
+            min={1}
+            max={item.available}
+            pattern="[1-9]+"
+            onChange={(e) =>
+              onChange((prev) => {
+                const { value } = e.target;
 
-              const { unit_price } = prev.items[index];
+                const parseQty = Number(value) || 0;
+                const quantity =
+                  parseQty >= item.available ? item.available : parseQty;
+                const { unit_price } = prev.items[index];
 
-              const newQty = Number(value) || 0;
+                const newItems = prev?.items?.map((i, idx) =>
+                  index === idx
+                    ? {
+                        ...i,
+                        quantity,
+                        line_total: quantity * unit_price,
+                      }
+                    : i,
+                );
 
-              const newItems = prev?.items?.map((i, idx) =>
-                index === idx
-                  ? {
-                      ...i,
-                      quantity: newQty,
-                      line_total: newQty * unit_price,
-                    }
-                  : i,
-              );
-
-              return { items: newItems };
-            })
-          }
-        />
+                return { items: newItems };
+              })
+            }
+          />
+        )}
       </td>
       <td className="text-right">
         <Price value={item.unit_cost} />
       </td>
       <td className="text-right">
         <NumericFormat
+          displayType={isLocked ? "text" : "input"}
           allowNegative={false}
           value={(Number(item.unit_price) || 0) / 100}
           customInput={Input}
@@ -97,19 +106,21 @@ export default function SalesOrderItemsRow({
         <Price value={item.line_total} />
       </td>
       <td className="text-right">
-        <Button
-          size="icon"
-          variant="outline"
-          onClick={() => {
-            onChange((prev) => {
-              const newItems = prev?.items?.filter((_, idx) => idx !== index);
+        {!isLocked && (
+          <Button
+            size="icon"
+            variant="outline"
+            onClick={() => {
+              onChange((prev) => {
+                const newItems = prev?.items?.filter((_, idx) => idx !== index);
 
-              return { items: newItems };
-            });
-          }}
-        >
-          <Trash2 size={14} />
-        </Button>
+                return { items: newItems };
+              });
+            }}
+          >
+            <Trash2 size={14} />
+          </Button>
+        )}
       </td>
     </>
   );

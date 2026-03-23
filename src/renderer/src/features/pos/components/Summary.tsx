@@ -94,7 +94,11 @@ function SubTotal(): ReactNode {
   );
 }
 
-function Discount(): ReactNode {
+type DiscountProps = {
+  displayType?: "text" | "input";
+};
+
+function Discount({ displayType = "input" }: DiscountProps): ReactNode {
   const ctx = useSummaryContext();
 
   // console.log('discount ctx', ctx)
@@ -104,6 +108,7 @@ function Discount(): ReactNode {
       <dt>Discount:</dt>
       <dd>
         <NumericFormat
+          displayType={displayType}
           data-testid="discount-textfield"
           value={ctx.discount / 100}
           customInput={Input}

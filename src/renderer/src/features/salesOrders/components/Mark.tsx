@@ -7,6 +7,7 @@ import Dialog from "@renderer/shared/components/ui/Dialog";
 import Textarea from "@renderer/shared/components/ui/Textarea";
 
 type Props = {
+  isLocked: boolean;
   initialData?: {
     bill_to: string;
     ship_to: string;
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export default function Mark({
+  isLocked,
   initialData,
   billTo,
   shipTo,
@@ -44,9 +46,11 @@ export default function Mark({
                 </h3>
 
                 <Dialog>
-                  <Dialog.Trigger variant="ghost" size="icon">
-                    <Edit2 size={14} />
-                  </Dialog.Trigger>
+                  {!isLocked && (
+                    <Dialog.Trigger variant="ghost" size="icon">
+                      <Edit2 size={14} />
+                    </Dialog.Trigger>
+                  )}
                   <Dialog.Content className="max-w-[36em]">
                     <Dialog.Header>
                       <h3 className="flex gap-x-2 items-center">
@@ -89,9 +93,11 @@ export default function Mark({
                 </h3>
 
                 <Dialog>
-                  <Dialog.Trigger variant="ghost" size="icon">
-                    <Edit2 size={14} />
-                  </Dialog.Trigger>
+                  {!isLocked && (
+                    <Dialog.Trigger variant="ghost" size="icon">
+                      <Edit2 size={14} />
+                    </Dialog.Trigger>
+                  )}
                   <Dialog.Content className="max-w-[36em]">
                     <Dialog.Header>
                       <h3 className="flex gap-x-2 items-center">
