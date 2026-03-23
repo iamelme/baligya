@@ -170,6 +170,7 @@ export type PlaceOrderType = {
   customer_name?: string;
   bill_to?: string;
   ship_to?: string;
+  notes?: string;
   status?: SaleType["status"];
   user_id: number;
 };
