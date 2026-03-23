@@ -15,11 +15,11 @@ import useCustomerSearch from "../hooks/useCustomerSearch";
 import Summary from "@renderer/features/pos/components/Summary";
 import SalesOrderItemsRow from "../components/SaleOrderItemsRow";
 import CustomerSearch from "../components/CustomerSearch";
-import { SalesOrderType } from "@renderer/shared/utils/types";
 import { ReturnSalesOrderType } from "src/main/interfaces/ISalesOrderRepository";
 import Mark from "../components/Mark";
 import Alert from "@renderer/shared/components/ui/Alert";
 import Actions from "../components/Actions";
+import ListPage from "@renderer/shared/components/ListPage";
 
 export default function SalesOrder(): ReactNode {
   const { id } = useParams();
@@ -35,9 +35,15 @@ export default function SalesOrder(): ReactNode {
     searchTerm: useDebounce(searchCust, 450),
   });
 
-  const initialData = useRef<NonNullable<ReturnSalesOrderType["data"]>>(null);
+  const initialData = useRef<ReturnSalesOrderType["data"]>(null);
 
-  const { salesOrder, onSave, errors } = useSalesOrderPage({
+  const {
+    salesOrder,
+    onSave,
+    errors,
+    isPending: isSalesOrderPending,
+    error,
+  } = useSalesOrderPage({
     id: String(id),
     userId: String(userId),
   });
@@ -55,113 +61,160 @@ export default function SalesOrder(): ReactNode {
     onChange(() => ({ [name]: value }));
   };
 
-  console.log({ salesOrder });
-  console.log({ initialData });
-
   const handleDiscountChange = (v: number) => {
-    onChange((prev) => {
+    onChange(() => {
       const discount = v * 100;
 
-      const total = prev.sub_total - discount;
-      return { discount, total };
+      return { discount };
     });
   };
 
   const isLocked = isStatusLocked(initialData?.current?.status ?? "draft");
 
   return (
-    <>
-      <h3>Sales Order</h3>
-      <div className="flex gap-x-3 mb-3">
-        <div>
-          <CustomerSearch
-            customer={salesOrder?.customer_name}
-            onSearchCustomer={setSearchCust}
-            customers={customers}
-            onChange={onChange}
-            isLoading={isPending}
-          />
-        </div>
+    <ListPage
+      header={{
+        left: {
+          title: `${id === "new" ? "New" : salesOrder?.order_number}`,
+          subTitle: `Sales Order`,
+        },
+      }}
+      isPending={isSalesOrderPending}
+      error={error}
+      content={
+        <>
+          <div className="flex gap-x-3 mb-3">
+            <div>
+              <label className="block mb-1 font-medium">Customer's Name</label>
 
-        <div>
-          <Input
-            type="date"
-            value={dayjs(salesOrder?.due_at).format("YYYY-MM-DD")}
-            onChange={(e) =>
-              onChange(() => ({
-                due_at: dayjs(e.target.value).format("YYYY-MM-DD"),
-              }))
-            }
-          />
-        </div>
-      </div>
+              <CustomerSearch
+                customer={salesOrder?.customer_name}
+                onSearchCustomer={setSearchCust}
+                customers={customers}
+                onChange={onChange}
+                isLoading={isPending}
+                isLocked={isLocked}
+              />
+            </div>
 
-      <div className="flex gap-x-3 mb-3">
-        <Mark
-          initialData={{
-            bill_to: initialData.current?.bill_to ?? "",
-            ship_to: initialData.current?.ship_to ?? "",
-          }}
-          billTo={salesOrder?.bill_to}
-          shipTo={salesOrder?.ship_to}
-          onChange={onChange}
-        />
-      </div>
+            <div>
+              <label htmlFor="due_date" className="block mb-1 font-medium">
+                Due Date
+              </label>
+              <Input
+                type="date"
+                id="due_date"
+                name="due_date"
+                disabled={isLocked}
+                value={dayjs(salesOrder?.due_at).format("YYYY-MM-DD")}
+                onChange={(e) =>
+                  onChange(() => ({
+                    due_at: dayjs(e.target.value).format("YYYY-MM-DD"),
+                  }))
+                }
+              />
+            </div>
+          </div>
 
-      <div className="">
-        {!isLocked && (
-          <Input
-            defaultValue={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search product..."
-            className=""
-          />
-        )}
-        {data?.results && (
-          <div className="my-3">
-            <ResultItems
-              items={data?.results}
-              onAddItem={(product) =>
-                onChange((prev) => ({
-                  items: mapper(prev.items, product),
-                }))
-              }
+          <div className="flex gap-x-3 mb-3">
+            <Mark
+              isLocked={isLocked}
+              initialData={{
+                bill_to: initialData.current?.bill_to ?? "",
+                ship_to: initialData.current?.ship_to ?? "",
+              }}
+              billTo={salesOrder?.bill_to}
+              shipTo={salesOrder?.ship_to}
+              onChange={onChange}
             />
           </div>
-        )}
-      </div>
 
+          <div className="">
+            {!isLocked && (
+              <Input
+                defaultValue={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search product..."
+                className=""
+              />
+            )}
+            {data?.results && (
+              <div className="my-3">
+                <ResultItems
+                  items={data?.results}
+                  onAddItem={(product) =>
+                    onChange((prev) => ({
+                      items: mapper(
+                        prev.items,
+                        product,
+                        initialData.current?.items,
+                      ),
+                    }))
+                  }
+                />
+              </div>
+            )}
+          </div>
 
-      <div className="flex gap-x-3 justify-between mb-3">
-        <div className="flex-1 max-w-[50%]">
-          <Textarea
-            name="notes"
-            placeholder="Notes..."
-            defaultValue={salesOrder?.notes}
-            onChange={handleChange}
-          />
-        </div>
-        <div className="flex flex-col gap-y-3 [&_dl]:gap-x-4">
-          {salesOrder && (
-            <Summary data={salesOrder} onChangeDiscount={handleDiscountChange}>
-              <Summary.SubTotal />
-              <Summary.Discount />
-              <Summary.Total />
-            </Summary>
+          <div className="mb-3">
+            <Items
+              headers={headers}
+              items={salesOrder?.items}
+              renderItems={(item, index) => (
+                <SalesOrderItemsRow
+                  key={item.id || index}
+                  isLocked={isLocked}
+                  item={item}
+                  index={index}
+                  onChange={onChange}
+                />
+              )}
+            />
+          </div>
+
+          <div className="flex gap-x-3 justify-between mb-3">
+            <div className="flex-1 max-w-[50%]">
+              <label htmlFor="notes" className="block mb-1 font-medium">
+                Notes
+              </label>
+              <Textarea
+                id="notes"
+                name="notes"
+                disabled={isLocked}
+                defaultValue={salesOrder?.notes}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="flex flex-col gap-y-3 [&_dl]:gap-x-4">
+              {salesOrder && (
+                <Summary
+                  data={salesOrder}
+                  onChangeDiscount={handleDiscountChange}
+                >
+                  <Summary.SubTotal />
+                  <Summary.Discount displayType={isLocked ? "text" : "input"} />
+                  <Summary.Total />
+                </Summary>
+              )}
+            </div>
+          </div>
+        </>
+      }
+      footer={
+        <>
+          {errors && (
+            <Alert variant="danger" className="mb-3">
+              {JSON.stringify(errors, null, 2)}
+            </Alert>
           )}
-        </div>
-      </div>
-      {errors && (
-        <Alert variant="danger" className="mb-3">
-          {JSON.stringify(errors, null, 2)}
-        </Alert>
-      )}
-      <div className="flex gap-x-3">
-        <Actions
-          status={id === "new" ? undefined : salesOrder?.status}
-          onSave={onSave}
-        />
-      </div>
-    </>
+          <div className="flex gap-x-1">
+            <Actions
+              status={id === "new" ? undefined : salesOrder?.status}
+              onSave={onSave}
+            />
+          </div>
+        </>
+      }
+    />
   );
 }
