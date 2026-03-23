@@ -780,9 +780,12 @@ export class SalesOrderRepository implements ISalesOrderRepository {
     error: Error | string;
   } {
     const {
+      status,
       due_at,
       user_id,
       customer_id,
+      bill_to,
+      ship_to,
       discount,
       vatable_sales,
       vat_amount,
@@ -802,9 +805,12 @@ export class SalesOrderRepository implements ISalesOrderRepository {
           sales_order
           (
            created_at,
+           status,
            due_at,
            user_id,
            customer_id,
+           bill_to,
+           ship_to,
            sub_total,
            discount,
            total,
@@ -814,22 +820,35 @@ export class SalesOrderRepository implements ISalesOrderRepository {
            notes
           )
         VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
       );
 
+      const stmtInvRese = db.prepare(
+        `
+            INSERT INTO
+              inventory_reservation
+              (created_at, quantity, sales_order_id, product_id)
+            VALUES(?, ?, ?, ?)
+            `,
+      );
+
       const transaction = db.transaction(() => {
-        const subTotal = items?.reduce(
-          (acc, cur) => (acc += (cur.quantity || 0) * cur.unit_price),
-          0,
-        );
-        const total = subTotal - discount;
+        const { subTotal, total } = this.calculateTotal(items, discount);
+        // const subTotal = items?.reduce(
+        //   (acc, cur) => (acc += (cur.quantity || 0) * cur.unit_price),
+        //   0,
+        // );
+        // const total = subTotal - discount;
 
         const salesOrder = stmtSalesOrder.run(
           createdAt,
+          status,
           due_at,
           user_id,
           customer_id,
+          bill_to,
+          ship_to,
           subTotal,
           discount,
           total,
@@ -850,6 +869,15 @@ export class SalesOrderRepository implements ISalesOrderRepository {
             sales_order_id: salesOrder.lastInsertRowid as number,
             user_id,
           });
+
+          if (status === "confirmed") {
+            stmtInvRese.run(
+              createdAt,
+              item.quantity,
+              salesOrder.lastInsertRowid,
+              item.product_id,
+            );
+          }
         }
         return true;
       });
