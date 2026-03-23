@@ -645,6 +645,7 @@ WHERE
       customer_name,
       bill_to = "",
       ship_to = "",
+      notes = "",
       status = "complete",
     } = params;
     const createdAt = new Date().toISOString();
@@ -666,6 +667,7 @@ WHERE
             customer_name = ?,
             bill_to = ?,
             ship_to = ?,
+            notes = ?,
             sales_order_id = ?
           WHERE
             id = ?
@@ -729,6 +731,7 @@ WHERE
           customer_name,
           bill_to,
           ship_to,
+          notes,
           sales_order_id,
           saleId,
         );
