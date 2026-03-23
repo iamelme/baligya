@@ -16,11 +16,16 @@ import {
 } from "../interfaces/ISalesOrderRepository";
 import { ipcMain } from "electron/main";
 import { errorMapper } from "../utils";
+import { SaleRepository } from "./SaleRepository";
 
 export class SalesOrderRepository implements ISalesOrderRepository {
   _database: AppDatabase;
-  constructor(database: AppDatabase) {
+  private _sales: SaleRepository;
+
+  constructor(database: AppDatabase, sales: SaleRepository) {
     this._database = database;
+    this._sales = sales;
+
     ipcMain.handle("salesOrder:create", (_, params: CreateSalesOrderParams) =>
       this.create(params),
     );
@@ -286,6 +291,81 @@ export class SalesOrderRepository implements ISalesOrderRepository {
               "Something went wrong while updating the sales order",
             );
           }
+        }
+
+        const { vatableSales, vatAmount, subTotal, total } =
+          this.calculateTotal(items, discount);
+        const salesOrderItems = stmtItems.all(id) as SalesOrderItemType[];
+
+        if (!salesOrderItems) {
+          throw new Error(
+            "Something went wrong while updating the sales order",
+          );
+        }
+
+        // if status of the current sales order is fulfilled we only change the status and others cannot
+        if (salesOrderSelect.status === "fulfilled") {
+          if (status === "complete") {
+            console.log("complete", { params });
+
+            const { name: customerName } = stmtCust.get(
+              salesOrderSelect.customer_id,
+            ) as {
+              name: string;
+            };
+
+            if (!customerName) {
+              throw new Error(
+                "Something went wrong while updating the sales order",
+              );
+            }
+
+            const payload = {
+              ...salesOrderSelect,
+              customer_name: customerName, // snapshot of the customers name at this time
+              items: salesOrderItems?.map((item) => ({
+                ...item,
+                cost: item.unit_cost,
+                price: item.unit_price,
+              })),
+              sub_total: salesOrderSelect.sub_total,
+              discount: salesOrderSelect.discount,
+              vatable_sales: vatableSales,
+              vat_amount: vatAmount,
+              total: salesOrderSelect.total,
+              amount: 0,
+              reference_number: "",
+              method: "",
+              sales_order_id: id,
+              sale_id: 0,
+              status: "unpaid" as const,
+            };
+
+            const { error } = this._sales.placeOrder(payload);
+
+            if (error instanceof Error) {
+              throw new Error(error.message);
+            }
+
+            const salesOrder = stmtSalesOrderStatus.run("complete", id);
+
+            if (!salesOrder.changes) {
+              throw new Error(
+                "Something went wrong while updating the sales order",
+              );
+            }
+
+            for (const item of items) {
+              stmtInvResUpdate.run({
+                status: "fulfilled",
+                quantity: item.quantity,
+                product_id: item.product_id,
+                sales_order_id: id,
+              });
+            }
+            return true;
+          }
+
           return true;
         }
 
