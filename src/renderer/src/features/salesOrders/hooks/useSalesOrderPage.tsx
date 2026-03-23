@@ -11,7 +11,11 @@ export type Params = {
 };
 
 export default function useSalesOrderPage({ id, userId }: Params) {
-  const { data: salesOrder } = useSalesOrderFetch(id || "new");
+  const {
+    data: salesOrder,
+    isPending,
+    error,
+  } = useSalesOrderFetch(id || "new");
 
   const [errors, setErrors] = useState<Partial<
     Record<
@@ -65,5 +69,7 @@ export default function useSalesOrderPage({ id, userId }: Params) {
     errors,
     onSave: handleSave,
     salesOrder,
+    isPending,
+    error,
   };
 }
