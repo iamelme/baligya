@@ -1,16 +1,13 @@
-import {
-  SalesOrderItemType,
-  SalesOrderType,
-} from "@renderer/shared/utils/types";
+import { SalesOrderType } from "@renderer/shared/utils/types";
 import { ReturnAllProductType } from "src/main/interfaces/IProductRepository";
+import { SalesOrderWithItems } from "../hooks/useUpdateData";
 
 type ItemType = NonNullable<ReturnAllProductType["data"]["results"]>[number];
 
 export function mapper(
-  items: Array<
-    SalesOrderItemType & { product_name: string; product_desc: string }
-  >,
+  items: SalesOrderWithItems["items"],
   item: ItemType,
+  initialItems?: SalesOrderWithItems["items"],
 ) {
   const base = {
     product_id: item.id,
@@ -21,6 +18,7 @@ export function mapper(
     unit_price: item.price,
     discount: 0,
     line_total: item.price,
+    available: item.available,
   };
   if (!items?.length) {
     return [
@@ -49,7 +47,11 @@ export function mapper(
     ];
   }
 
-  if (item.quantity <= found.quantity) {
+  const initialItem = initialItems?.find((it) => it.product_id === item.id);
+
+  const available = (initialItem?.quantity ?? 0) + (item?.available ?? 0);
+
+  if (available <= found.quantity) {
     return items;
   }
 
