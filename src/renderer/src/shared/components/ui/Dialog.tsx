@@ -64,14 +64,19 @@ function Close(
     Omit<ButtonProps, "children">,
 ): ReactNode {
   const { dialogRef } = useDialogContext();
-  const handleClick = (): void => {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>): void => {
+    console.log("dialogRef.current", dialogRef.current);
+
+    if (props.onClick) {
+      props?.onClick?.(e);
+    }
     if (dialogRef.current) {
       dialogRef.current.close();
     }
   };
 
   return (
-    <Button onClick={handleClick} type="button" {...props}>
+    <Button {...props} onClick={handleClick} type="button">
       {props.children}
     </Button>
   );
