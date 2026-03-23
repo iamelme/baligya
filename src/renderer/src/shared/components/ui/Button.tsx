@@ -4,8 +4,9 @@ import { twMerge } from "tailwind-merge";
 const styles = {
   variants: {
     default: "bg-indigo-600 text-white",
-    danger: "bg-red-600 text-white",
+    danger: "bg-red-500 text-white",
     outline: "border border-slate-400",
+    ghost: "hover:underline",
   },
   sizes: {
     default: "py-2 px-4",
