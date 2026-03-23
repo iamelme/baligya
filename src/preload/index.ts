@@ -264,7 +264,8 @@ export const apiInventory = {
 };
 
 export const apiSettings = {
-  getSettings: (): Promise<ReturnSettingsType> => ipcRenderer.invoke("settings:get"),
+  getSettings: (): Promise<ReturnSettingsType> =>
+    ipcRenderer.invoke("settings:get"),
   getBackuplogs: (): Promise<{
     data: { created_at: string; status?: string };
     error: ErrorType;
