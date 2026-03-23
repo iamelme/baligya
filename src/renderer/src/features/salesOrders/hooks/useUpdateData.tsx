@@ -9,9 +9,13 @@ type Params = {
   orderId: string;
 };
 
-type SalesOrderWithItems = SalesOrderType & {
+export type SalesOrderWithItems = SalesOrderType & {
   items: Array<
-    SalesOrderItemType & { product_name: string; product_desc: string }
+    SalesOrderItemType & {
+      product_name: string;
+      product_desc: string;
+      available: number;
+    }
   >;
 };
 
