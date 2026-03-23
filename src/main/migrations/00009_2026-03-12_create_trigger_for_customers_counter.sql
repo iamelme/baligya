@@ -23,6 +23,6 @@ BEGIN
   SET
     count = count - 1
   WHERE
-    name = 'customers'
+    name = 'customers';
 
 END;
