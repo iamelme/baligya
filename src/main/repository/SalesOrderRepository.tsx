@@ -549,13 +549,27 @@ export class SalesOrderRepository implements ISalesOrderRepository {
         SELECT
           soi.*,
           p.name AS product_name,
-          p.description AS product_desc
+          p.description AS product_desc,
+          COALESCE((i.quantity - COALESCE(ir.quantity, 0)), 0) + soi.quantity AS available
         FROM
           sales_order_items AS soi
         LEFT JOIN
           products AS p
-        ON
-          p.id = soi.product_id
+          ON p.id = soi.product_id
+        LEFT JOIN
+          inventory AS i
+          ON p.id = i.product_id
+        LEFT JOIN (
+          SELECT
+            product_id,
+            SUM(quantity) AS quantity
+          FROM
+            inventory_reservation
+          WHERE
+            status = 'active'
+           GROUP BY
+            product_id
+          ) AS ir ON ir.product_id = p.id
         WHERE
           soi.sales_order_id = ?
         `,
@@ -571,7 +585,11 @@ export class SalesOrderRepository implements ISalesOrderRepository {
         }
 
         const salesOrderItems = stmtItems.all(id) as Array<
-          SalesOrderItemType & { product_name: string; product_desc: string }
+          SalesOrderItemType & {
+            product_name: string;
+            product_desc: string;
+            available: number;
+          }
         >;
 
         return {
@@ -583,7 +601,7 @@ export class SalesOrderRepository implements ISalesOrderRepository {
       const res = transaction();
       return {
         data: res,
-        error: "Something went wrong while retrieving the sales order",
+        error: "",
       };
     } catch (error) {
       console.log(error);
