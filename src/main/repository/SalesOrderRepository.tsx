@@ -108,7 +108,9 @@ export class SalesOrderRepository implements ISalesOrderRepository {
         );
 
         const transaction = db.transaction(() => {
-          const salesOrderItems = stmt.all() as SalesOrderItemType[];
+          const salesOrderItems = stmt.all(
+            salesOrderId,
+          ) as SalesOrderItemType[];
 
           if (!salesOrderItems) {
             throw new Error(
@@ -215,6 +217,8 @@ export class SalesOrderRepository implements ISalesOrderRepository {
       console.log({ params });
       const db = this._database.getDb();
 
+      const createdAt = new Date().toISOString();
+
       const stmt = db.prepare(
         `
         SELECT
@@ -232,6 +236,8 @@ export class SalesOrderRepository implements ISalesOrderRepository {
           sales_order
         SET
            due_at = :due_at,
+           bill_to = :bill_to,
+           ship_to = :ship_to,
            status = :status,
            user_id = :user_id ,
            customer_id = :customer_id,
@@ -269,23 +275,88 @@ export class SalesOrderRepository implements ISalesOrderRepository {
         `,
       );
 
+      const stmtInvReseSel = db.prepare(
+        `
+        SELECT
+          *
+        FROM
+          inventory_reservation
+        WHERE
+          sales_order_id = ?
+          AND
+          product_id = ?
+        `,
+      );
+
+      const stmtInvRese = db.prepare(
+        `
+            INSERT INTO
+              inventory_reservation
+              (created_at, quantity, sales_order_id, product_id)
+            VALUES(?, ?, ?, ?)
+            `,
+      );
+
+      const stmtInvResUpdate = db.prepare(
+        `
+        UPDATE
+          inventory_reservation
+        SET
+          status = :status,
+          quantity = :quantity
+        WHERE
+          sales_order_id = :sales_order_id
+          AND
+          product_id = :product_id
+        `,
+      );
+
+      const stmtCust = db.prepare(
+        `
+        SELECT
+          name
+        FROM
+          customers
+        WHERE
+          id = ?
+        `,
+      );
+
       const transaction = db.transaction(() => {
         const salesOrderSelect = stmt.get(id) as SalesOrderType;
 
         if (!salesOrderSelect) {
           throw new Error("Order not found");
         }
-        //on this point user can only change status
+
+        if (
+          ["complete", "cancelled"].find((s) => s === salesOrderSelect.status)
+        ) {
+          // const salesOrder = stmtSalesOrderStatus.run(status, id);
+          //
+          // if (!salesOrder.changes) {
+          //   throw new Error(
+          //     "Something went wrong while updating the sales order",
+          //   );
+          // }
+          return true;
+        }
+
+        if (status !== "cancelled") {
+          const { success, error } = this.checkDoubleBooking({
+            items,
+            salesOrderId: id,
+          });
+
+          if (!success) {
+            throw new Error(error instanceof Error ? error.message : error);
+          }
+        }
 
         console.log(" salesOrderSelect", salesOrderSelect);
 
-        if (
-          ["fulfilled", "complete", "cancelled"].find(
-            (s) => s === salesOrderSelect.status,
-          )
-        ) {
+        if (status === "fulfilled") {
           const salesOrder = stmtSalesOrderStatus.run(status, id);
-
           if (!salesOrder.changes) {
             throw new Error(
               "Something went wrong while updating the sales order",
@@ -369,11 +440,26 @@ export class SalesOrderRepository implements ISalesOrderRepository {
           return true;
         }
 
-        const subTotal = items?.reduce(
-          (acc, cur) => (acc += (cur.quantity || 0) * cur.unit_price),
-          0,
-        );
-        const total = subTotal - discount;
+        if (status === "cancelled") {
+          const salesOrder = stmtSalesOrderStatus.run("cancelled", id);
+
+          if (!salesOrder.changes) {
+            throw new Error(
+              "Something went wrong while updating the sales order",
+            );
+          }
+
+          for (const item of salesOrderItems) {
+            stmtInvResUpdate.run({
+              status: "released",
+              quantity: item.quantity,
+              product_id: item.product_id,
+              sales_order_id: id,
+            });
+          }
+
+          return true;
+        }
 
         const salesOrder = stmtSalesOrder.run({
           ...params,
@@ -381,49 +467,41 @@ export class SalesOrderRepository implements ISalesOrderRepository {
           total,
         });
 
-        // const salesOrder = stmtSalesOrder.run(
-        //   due_at,
-        //   status,
-        //   user_id,
-        //   customer_id,
-        //   subTotal,
-        //   discount,
-        //   total,
-        //   vatable_sales,
-        //   vat_amount,
-        //   tax,
-        //   notes,
-        //   id,
-        // );
-
         if (!salesOrder.changes) {
           throw new Error(
             "Something went wrong while updating the sales order",
           );
         }
 
-        const salesOrderItems = stmtItems.all(id) as SalesOrderItemType[];
+        const hasItemsDeleted = items.length < salesOrderItems.length;
 
-        if (!salesOrderItems) {
-          throw new Error(
-            "Something went wrong while updating the sales order",
-          );
-        }
-
-        console.log("update salesOrderItems ", salesOrderItems);
-
-        if (items.length < salesOrderItems.length) {
+        if (hasItemsDeleted) {
           for (const item of salesOrderItems) {
             const found = items?.find((i) => i.id === item.id);
 
             if (!found) {
+              // delete if item is not found in the current
               const { error } = this.deleteItem(item.id);
               if (error instanceof Error) {
                 throw new Error(error.message);
               }
+
+              stmtInvResUpdate.run({
+                status: "cancelled", // delete
+                quantity: item.quantity,
+                product_id: item.product_id,
+                sales_order_id: id,
+              });
+
               continue;
             }
             const { error } = this.updateItem(item);
+            stmtInvResUpdate.run({
+              status: "active",
+              quantity: item.quantity,
+              product_id: item.product_id,
+              sales_order_id: id,
+            });
 
             if (error instanceof Error) {
               throw new Error(error.message);
@@ -432,6 +510,23 @@ export class SalesOrderRepository implements ISalesOrderRepository {
         } else {
           for (const item of items) {
             const found = salesOrderItems?.find((i) => i.id === item.id);
+
+            const selectInventoryReservation = stmtInvReseSel.get(
+              id,
+              item.product_id,
+            );
+
+            if (!selectInventoryReservation && status === "confirmed") {
+              stmtInvRese.run(createdAt, item.quantity, id, item.product_id);
+            } else {
+              stmtInvResUpdate.run({
+                status: "active",
+                quantity: item.quantity,
+                product_id: item.product_id,
+                sales_order_id: id,
+              });
+            }
+
             if (found) {
               const { error } = this.updateItem(item);
 
@@ -776,5 +871,120 @@ export class SalesOrderRepository implements ISalesOrderRepository {
         error: errorMapper(error),
       };
     }
+  }
+
+  private checkDoubleBooking({
+    items,
+    salesOrderId,
+  }: {
+    items: UpdateSalesOrderItemsParams[];
+    salesOrderId: number;
+  }) {
+    try {
+      const db = this._database.getDb();
+
+      let errors: string[] = [];
+
+      const transaction = db.transaction(() => {
+        for (const item of items) {
+          const itemReserved = db
+            .prepare(
+              `
+            SELECT
+              *
+            FROM
+              inventory_reservation
+            WHERE
+              sales_order_id = ?
+              AND
+              product_id = ?
+            `,
+            )
+            .get(salesOrderId, item.product_id) as { quantity: number };
+          const quantity = itemReserved?.quantity ?? 0;
+
+          const { product_name, available } = db
+            .prepare(
+              `
+            SELECT
+              p.name AS product_name,
+              i.quantity,
+              ir.quantity AS reserve,
+              i.quantity - COALESCE(ir.quantity, 0) AS available
+            FROM
+              inventory AS i
+            LEFT JOIN
+              (
+                SELECT
+                  product_id,
+                  SUM(quantity) as quantity
+                FROM
+                  inventory_reservation
+                WHERE
+                  status = 'active'
+                GROUP BY
+                  product_id
+              ) AS ir
+              ON ir.product_id = i.product_id
+            LEFT JOIN
+              products AS p
+              ON p.id = i.product_id
+            WHERE
+              i.product_id = ?
+        `,
+            )
+            .get(item.product_id) as {
+            product_name: string;
+            available: number;
+          };
+
+          // check if the item made the reservation
+          // if yes then add it to the available
+
+          if (item?.quantity > available + quantity) {
+            errors.push(
+              `${product_name} only ${available} ${available > 1 ? "are" : "is"} available `,
+            );
+          }
+        }
+      });
+      transaction();
+      if (errors.length) {
+        return {
+          success: false,
+          error: `Insufficient stock(s) for
+            ${errors.join("\n, ")}`,
+        };
+      }
+
+      return {
+        success: true,
+        error: "",
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: new Error(
+          "Something went wrong while checking for product availability",
+        ),
+      };
+    }
+  }
+
+  private calculateTotal(
+    items: UpdateSalesOrderItemsParams[],
+    discount: number,
+    taxRate = 12,
+  ) {
+    const subTotal = items?.reduce(
+      (acc, cur) => (acc += (cur.quantity || 0) * cur.unit_price),
+      0,
+    );
+
+    const vatableSales = subTotal / (1 + taxRate);
+    const vatAmount = subTotal - vatableSales;
+    const total = subTotal - discount;
+
+    return { vatableSales, vatAmount, subTotal, total };
   }
 }
