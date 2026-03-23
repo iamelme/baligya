@@ -32,7 +32,7 @@ export default function Index(): ReactNode {
 
   const currentPage = Number(searchParams.get("currentPage")) || 0;
   const { data, isPending, error } = useQuery({
-    queryKey: ["customers"],
+    queryKey: ["customers", currentPage, pageSize],
     queryFn: async () => {
       const { data, error } = await window.apiCustomer.getAll();
 
