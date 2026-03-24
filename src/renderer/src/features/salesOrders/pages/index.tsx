@@ -6,6 +6,7 @@ import Items from "@renderer/shared/components/Items";
 import { Link } from "react-router-dom";
 import { PlusCircle } from "react-feather";
 import Price from "@renderer/shared/components/ui/Price";
+import BadgeStatus from "../components/SalesOrderBadgeStatus";
 
 const Action = (): React.JSX.Element => (
   <div className="flex justify-end">
@@ -67,7 +68,9 @@ export default function SalesOrder(): ReactNode {
                     <td>
                       <Price value={item.total} />
                     </td>
-                    <td>{item.status}</td>
+                    <td>
+                      <BadgeStatus status={item.status} />
+                    </td>
                   </>
                 )}
               />
