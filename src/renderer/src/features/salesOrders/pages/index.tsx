@@ -88,10 +88,14 @@ export default function SalesOrder(): ReactNode {
                       </Link>
                     </td>
                     <td className="">
-                      {new Date(item.created_at).toLocaleDateString()}
+                      {new Date(item.created_at).toLocaleDateString("en-PH", {
+                        timeZone: "UTC",
+                      })}
                     </td>
                     <td className="">
-                      {new Date(item.due_at).toLocaleDateString()}
+                      {new Date(item.due_at).toLocaleDateString("en-PH", {
+                        timeZone: "UTC",
+                      })}
                     </td>
                     <td>{item?.customer_name ?? ""}</td>
                     <td>
