@@ -20,6 +20,7 @@ import Mark from "../components/Mark";
 import Alert from "@renderer/shared/components/ui/Alert";
 import Actions from "../components/Actions";
 import ListPage from "@renderer/shared/components/ListPage";
+import ErrorList from "../components/ErrorList";
 
 export default function SalesOrder(): ReactNode {
   const { id } = useParams();
@@ -203,9 +204,9 @@ export default function SalesOrder(): ReactNode {
       footer={
         <>
           {errors && (
-            <Alert variant="danger" className="mb-3">
-              {JSON.stringify(errors, null, 2)}
-            </Alert>
+            <div className="mb-3">
+              <ErrorList errors={errors} />
+            </div>
           )}
           <div className="flex gap-x-1">
             <Actions
