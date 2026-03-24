@@ -6,6 +6,7 @@ import {
 import { AppDatabase } from "../database/db";
 import {
   CreateSalesOrderParams,
+  GetAllSalesOrderParams,
   InsertSalesOrderItemsParams,
   ISalesOrderRepository,
   ReturnAllSalesOrderItemType,
@@ -36,7 +37,9 @@ export class SalesOrderRepository implements ISalesOrderRepository {
     ipcMain.handle("salesOrder:update", (_, params: UpdateSalesOrderParams) =>
       this.update(params),
     );
-    ipcMain.handle("salesOrder:getAll", (_) => this.getAll());
+    ipcMain.handle("salesOrder:getAll", (_, params: GetAllSalesOrderParams) =>
+      this.getAll(params),
+    );
     ipcMain.handle("salesOrder:getById", (_, id: number) => this.getById(id));
   }
 
@@ -566,7 +569,8 @@ export class SalesOrderRepository implements ISalesOrderRepository {
     }
   }
 
-  getAll(): ReturnAllSalesOrderType {
+  getAll(params: GetAllSalesOrderParams): ReturnAllSalesOrderType {
+    const { startDate, endDate, pageSize, offset } = params;
     try {
       const db = this._database.getDb();
 
@@ -581,13 +585,44 @@ export class SalesOrderRepository implements ISalesOrderRepository {
           customers AS c
         ON
           c.id = so.customer_id
+        WHERE
+          (:startDate IS FALSE OR so.created_at >= :startDate )
+          AND (:endDate IS FALSE OR so.created_at < :endDate )
+        LIMIT :limit
+        OFFSET :offset
+        `,
+      );
+
+      const stmtCount = db.prepare(
+        `
+          SELECT
+            count
+          FROM
+            counter
+          WHERE
+            name = :name
+        `,
+      );
+
+      const stmtCount2 = db.prepare(
+        `
+        SELECT
+          COUNT(id) as count
+        FROM
+          sales_order
+        WHERE
+          (:startDate IS FALSE OR created_at >= :startDate )
+          AND (:endDate IS FALSE OR created_at < :endDate )
         `,
       );
 
       const transaction = db.transaction(() => {
-        const salesOrders = stmt.all() as Array<
-          SalesOrderType & { customer_name: string }
-        >;
+        const salesOrders = stmt.all({
+          startDate,
+          endDate,
+          limit: pageSize,
+          offset: offset ? offset * pageSize : offset,
+        }) as Array<SalesOrderType & { customer_name: string }>;
 
         if (!salesOrders) {
           throw new Error(
@@ -595,8 +630,23 @@ export class SalesOrderRepository implements ISalesOrderRepository {
           );
         }
 
+        let total = { count: 0 };
+
+        if (startDate || endDate) {
+          total = stmtCount2.get({
+            startDate,
+            endDate,
+          }) as {
+            count: number;
+          };
+        } else {
+          total = stmtCount.get({ name: "sales-order" }) as {
+            count: number;
+          };
+        }
+
         return {
-          total: 0,
+          total: total?.count || 0,
           results: salesOrders,
         };
       });

@@ -39,6 +39,7 @@ import {
 } from "src/main/interfaces/ICustomerRepository";
 import {
   CreateSalesOrderParams,
+  GetAllSalesOrderParams,
   ReturnAllSalesOrderType,
   ReturnSalesOrderType,
   UpdateSalesOrderParams,
@@ -305,8 +306,8 @@ export const apiSalesOrder = {
     params: UpdateSalesOrderParams,
   ): Promise<{ success: boolean; error: Error | string }> =>
     ipcRenderer.invoke("salesOrder:update", params),
-  getAll: (): Promise<ReturnAllSalesOrderType> =>
-    ipcRenderer.invoke("salesOrder:getAll"),
+  getAll: (params: GetAllSalesOrderParams): Promise<ReturnAllSalesOrderType> =>
+    ipcRenderer.invoke("salesOrder:getAll", params),
   getById: (id: number): Promise<ReturnSalesOrderType> =>
     ipcRenderer.invoke("salesOrder:getById", id),
 };

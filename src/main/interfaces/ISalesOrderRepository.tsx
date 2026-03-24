@@ -19,6 +19,14 @@ export type UpdateSalesOrderItemsParams = Omit<
   "created_at" | "sales_order_id"
 >;
 
+export type GetAllSalesOrderParams = {
+  startDate: string;
+  endDate: string;
+  pageSize: number;
+  offset: number;
+  userId?: number;
+};
+
 export type ReturnSalesOrderType = {
   data:
     | (SalesOrderType & {
@@ -62,7 +70,7 @@ export interface ISalesOrderRepository {
     error: Error | string;
   };
 
-  getAll(): ReturnAllSalesOrderType;
+  getAll(params: GetAllSalesOrderParams): ReturnAllSalesOrderType;
 
   getById(id: number): ReturnSalesOrderType;
 

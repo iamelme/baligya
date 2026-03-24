@@ -1,11 +1,14 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import Button from "@renderer/shared/components/ui/Button";
 import useSalesOrdersFetch from "../hooks/useSalesOrdersFetch";
 import ListPage from "@renderer/shared/components/ListPage";
 import Items from "@renderer/shared/components/Items";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { PlusCircle } from "react-feather";
 import Price from "@renderer/shared/components/ui/Price";
+import Pagination2 from "@renderer/shared/components/Pagination2";
+import { addDays } from "@renderer/shared/utils";
+import DateFilter from "@renderer/shared/components/DateFilter";
 import BadgeStatus from "../components/SalesOrderBadgeStatus";
 
 const Action = (): React.JSX.Element => (
@@ -29,9 +32,23 @@ const headers = [
 ];
 
 export default function SalesOrder(): ReactNode {
-  const { data, isPending, error } = useSalesOrdersFetch();
+  const [pageSize, setPageSize] = useState(50);
 
-  console.log(data);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [startDate, setStartDate] = useState<Date | string>("");
+  const [endDate, setEndDate] = useState<Date | string>("");
+
+  let currentPage = searchParams.get("currentPage") ?? "";
+
+  const normalizedStart = startDate ? new Date(startDate)?.toISOString() : "";
+  const normalizedEnd = endDate ? addDays(new Date(endDate), 1) : "";
+
+  const { data, isPending, error } = useSalesOrdersFetch({
+    pageSize,
+    startDate: normalizedStart,
+    endDate: normalizedEnd,
+    currentPage,
+  });
 
   return (
     <>
@@ -41,7 +58,19 @@ export default function SalesOrder(): ReactNode {
             title: "Sales Order",
             subTitle: "List of all sales order",
           },
-          right: <Action />,
+          right: (
+            <>
+              <div className="mb-3">
+                <Action />
+              </div>
+              <DateFilter
+                startDate={startDate}
+                endDate={endDate}
+                onStartDate={setStartDate}
+                onEndDate={setEndDate}
+              />
+            </>
+          ),
         }}
         isPending={isPending}
         error={error}
@@ -77,24 +106,19 @@ export default function SalesOrder(): ReactNode {
             </>
           )
         }
-        // footer={
-        //   <div className="flex items-center justify-end gap-x-2">
-        //     <span>Per page</span>
-        //     <div className="w-[100px]">
-        //       <NumericFormat
-        //         defaultValue={pageSize}
-        //         customInput={Input}
-        //         onValueChange={(values) => {
-        //           const { floatValue } = values;
-        //
-        //           if (floatValue) {
-        //             setPageSize(floatValue);
-        //           }
-        //         }}
-        //       />
-        //     </div>
-        //   </div>
-        // }
+        footer={
+          data ? (
+            <Pagination2
+              pageSize={pageSize}
+              paginateSize={5}
+              total={data.total}
+              searchParams={searchParams}
+              onSearchParams={setSearchParams}
+              currentPage={Number(currentPage) || 0}
+              onPageSize={setPageSize}
+            />
+          ) : null
+        }
       />
     </>
   );
