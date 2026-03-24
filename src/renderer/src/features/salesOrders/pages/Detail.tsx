@@ -17,7 +17,6 @@ import SalesOrderItemsRow from "../components/SaleOrderItemsRow";
 import CustomerSearch from "../components/CustomerSearch";
 import { ReturnSalesOrderType } from "src/main/interfaces/ISalesOrderRepository";
 import Mark from "../components/Mark";
-import Alert from "@renderer/shared/components/ui/Alert";
 import Actions from "../components/Actions";
 import ListPage from "@renderer/shared/components/ListPage";
 import ErrorList from "../components/ErrorList";
