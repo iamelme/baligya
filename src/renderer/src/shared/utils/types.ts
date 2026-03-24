@@ -97,7 +97,14 @@ export type SaleType = {
   vatable_sales: number;
   vat_amount: number;
   total: number;
-  status: "complete" | "return" | "partial_return" | "void";
+  status:
+    | "unpaid"
+    | "partial_paid"
+    | "complete"
+    | "return"
+    | "partial_return"
+    | "void";
+  sales_order_id?: number | null;
   user_id: number;
 };
 export type SaleItemType = {
@@ -137,12 +144,34 @@ export type ReturnSaleType = {
 };
 
 export type PlaceOrderType = {
-  cart: Omit<ReturnCartType, "id">;
+  // cart: Omit<ReturnCartType, "id">;
+  items: {
+    quantity: number;
+    product_id: number;
+    price: number;
+    cost: number;
+    user_id: number;
+  }[];
+
   amount: number;
+
+  sub_total: number;
+  discount: number;
+  vatable_sales: number;
+  vat_amount: number;
+  tax: number;
+  total: number;
+
   reference_number: string;
   method: string;
+  sales_order_id?: number | null;
   sale_id: number;
+  customer_id?: number | null;
   customer_name?: string;
+  bill_to?: string;
+  ship_to?: string;
+  notes?: string;
+  status?: SaleType["status"];
   user_id: number;
 };
 
@@ -218,4 +247,36 @@ export type CustomerType = {
   name: string;
   address: string;
   phone: string;
+};
+
+export type SalesOrderType = {
+  id: number;
+  created_at: string;
+  due_at: string;
+  order_number?: string;
+  status: "draft" | "confirmed" | "fulfilled" | "complete" | "cancelled";
+  bill_to: string;
+  ship_to: string;
+  sub_total: number;
+  discount: number;
+  total: number;
+  vatable_sales: number;
+  vat_amount: number;
+  tax: number;
+  notes: string;
+  customer_id: number | null;
+  user_id: number;
+};
+
+export type SalesOrderItemType = {
+  id: number;
+  created_at: string;
+  quantity: number;
+  unit_price: number;
+  unit_cost: number;
+  discount: number;
+  line_total: number;
+  product_id: number;
+  sales_order_id: number;
+  user_id: number;
 };

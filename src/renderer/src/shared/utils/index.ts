@@ -1,4 +1,5 @@
 export function humanize(str: string): string {
+  if (!str) return "";
   return str
     .replace(/^[\s_]+|[\s_]+$/g, "")
     .replace(/[-_\s]+/g, " ")
@@ -113,10 +114,12 @@ export function downloadblePDF({
   document.body.removeChild(link);
 }
 
-export function arrKeyValueToObj<K extends string, V = string>(arr?: {key: K, value: V}[] | undefined) {
+export function arrKeyValueToObj<K extends string, V = string>(
+  arr?: { key: K; value: V }[] | undefined,
+) {
   return arr?.reduce(
-    (acc, {key, value}) => {
-      acc[key] =value;
+    (acc, { key, value }) => {
+      acc[key] = value;
 
       return acc;
     },

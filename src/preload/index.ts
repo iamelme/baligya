@@ -34,8 +34,16 @@ import {
 } from "../main/interfaces/ISettingRepository";
 import {
   ReturnAllCustomerType,
+  ReturnCustomerSearchType,
   ReturnCustomerType,
 } from "src/main/interfaces/ICustomerRepository";
+import {
+  CreateSalesOrderParams,
+  GetAllSalesOrderParams,
+  ReturnAllSalesOrderType,
+  ReturnSalesOrderType,
+  UpdateSalesOrderParams,
+} from "src/main/interfaces/ISalesOrderRepository";
 
 // type ProdInventoryType = {
 //   id: number
@@ -289,7 +297,24 @@ export const apiSettings = {
     ipcRenderer.invoke("upload-backup"),
 };
 
+export const apiSalesOrder = {
+  create: (
+    params: CreateSalesOrderParams,
+  ): Promise<{ success: boolean; error: Error | string }> =>
+    ipcRenderer.invoke("salesOrder:create", params),
+  update: (
+    params: UpdateSalesOrderParams,
+  ): Promise<{ success: boolean; error: Error | string }> =>
+    ipcRenderer.invoke("salesOrder:update", params),
+  getAll: (params: GetAllSalesOrderParams): Promise<ReturnAllSalesOrderType> =>
+    ipcRenderer.invoke("salesOrder:getAll", params),
+  getById: (id: number): Promise<ReturnSalesOrderType> =>
+    ipcRenderer.invoke("salesOrder:getById", id),
+};
+
 export const apiCustomer = {
+  search: (term: string): Promise<ReturnCustomerSearchType> =>
+    ipcRenderer.invoke("customer:search", term),
   create: (
     params: Omit<CustomerType, "id" | "created_at">,
   ): Promise<{ success: boolean; error: Error | string }> =>
@@ -331,6 +356,7 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld("electron", electronAPI);
     contextBridge.exposeInMainWorld("apiCart", apiCart);
     contextBridge.exposeInMainWorld("apiSale", apiSale);
+    contextBridge.exposeInMainWorld("apiSalesOrder", apiSalesOrder);
     contextBridge.exposeInMainWorld("apiReturn", apiReturn);
     contextBridge.exposeInMainWorld("apiUser", apiUser);
     contextBridge.exposeInMainWorld("apiCustomer", apiCustomer);

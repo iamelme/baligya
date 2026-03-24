@@ -78,7 +78,6 @@ function Search({
       o.label.toLowerCase().includes(value.toLowerCase()),
     );
     setOpt(filterOpt);
-
     props?.onChange?.(e);
   };
 
