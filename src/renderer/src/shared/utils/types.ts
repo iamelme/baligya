@@ -141,6 +141,9 @@ export type ReturnSaleType = {
   amount: number;
   method: string;
   customer_name?: string;
+  bill_to?: string;
+  ship_to?: string;
+  notes?: string;
 };
 
 export type PlaceOrderType = {
