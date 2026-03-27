@@ -55,8 +55,8 @@ export default function SalesOrder(): ReactNode {
       <ListPage
         header={{
           left: {
-            title: "Sales Order",
-            subTitle: "List of all sales order",
+            title: "Order",
+            subTitle: "List of all order",
           },
           right: (
             <>

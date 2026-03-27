@@ -6,7 +6,7 @@ import ProtectedRoutes from "./ProtectedRoutes";
 import App from "./App";
 import Signup from "../features/auth/pages/Signup";
 import HomePage from "../features/home/pages";
-import POS from "../features/pos/pages";
+import SalesLog from "../features/salesLog/pages";
 
 import SO from "../features/salesOrders/pages";
 import SODetail from "../features/salesOrders/pages/Detail";
@@ -51,7 +51,7 @@ export default function Router() {
           }
         >
           <Route index element={<HomePage />} />
-          <Route path="pos" element={<POS />} />
+          <Route path="sales-log" element={<SalesLog />} />
 
           <Route path="so">
             <Route index element={<SO />} />

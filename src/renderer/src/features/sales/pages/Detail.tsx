@@ -6,7 +6,6 @@ import {
   arrKeyValueToObj,
   downloadblePDF,
   humanize,
-  saleStatuses,
 } from "@renderer/shared/utils";
 import { ReturnItemType } from "@renderer/shared/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,8 +14,9 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import useBoundStore from "@renderer/shared/stores//boundStore";
 import Return from "../components/Return";
 import Badge from "@renderer/shared/components/ui/Badge";
-import { FileText, Printer } from "react-feather";
+import { FileText, Printer, XCircle } from "react-feather";
 import { SettingsType } from "../../../shared/utils/types";
+import Mark from "@renderer/features/salesOrders/components/Mark";
 const headers = [
   { label: "Name", className: "" },
   { label: "Quantity", className: "text-right" },
@@ -208,7 +208,7 @@ export default function Detail(): ReactNode {
   }
 
   if (!data) {
-    return <Alert variant="danger">No Details for this Sales Invoice</Alert>;
+    return <Alert variant="danger">No Details for this Sale Record</Alert>;
   }
 
   const settingsArr: { key: keyof SettingsType; value: string }[] | undefined =
@@ -220,6 +220,7 @@ export default function Detail(): ReactNode {
 
   const handleDownloadPDF = async (): Promise<void> => {
     try {
+      console.log({ data });
       const res = await window.apiElectron.createPDF({
         ...data,
         ...settings,
@@ -286,45 +287,45 @@ export default function Detail(): ReactNode {
                 onReturn={mutationReturn.mutate}
               />
             )}
+            {!["void", "partial_return", "return"].find(
+              (status) => status === data?.status,
+            ) && (
+              <Button
+                variant="danger"
+                onClick={() => mutationUpdateStatus.mutate("void")}
+              >
+                <XCircle size={14} /> Void
+              </Button>
+            )}
           </div>
 
-          <h2 className="font-bold">Invoice No.</h2>
+          <h2 className="font-bold">Sale Record</h2>
           <p className="text-xl">{data?.invoice_number}</p>
           <p>{new Date(data.created_at).toLocaleString()}</p>
-
           <p>
             {mutationUpdateStatus.error && (
               <Alert className="my-3" variant="danger">
                 {mutationUpdateStatus.error?.message}
               </Alert>
             )}
-            {["void", "partial_return", "return"].find(
-              (status) => status === data?.status,
-            ) ? (
-              <Badge>{humanize(data.status)}</Badge>
-            ) : (
-              <select
-                key={data.status}
-                defaultValue={data.status}
-                onChange={(e) => mutationUpdateStatus.mutate(e.target.value)}
-              >
-                {saleStatuses.map((status) => (
-                  <option key={status.value} value={status.value}>
-                    {status.label}
-                  </option>
-                ))}
-              </select>
-            )}
+
+            <Badge>{humanize(data.status)}</Badge>
           </p>
         </div>
       </div>
-      {data?.customer_name && (
-        <div className="mb-3">
-          <h3 className="font-medium mb-1">Bill To</h3>
-          <p>{data.customer_name}</p>
-          <address></address>
-        </div>
-      )}
+      <div className="my-3">
+        <h4 className="font-medium">Customer's Name</h4>
+        <p>{data?.customer_name}</p>
+      </div>
+
+      <div className="flex gap-x-3 my-3">
+        <Mark
+          isLocked={true}
+          billTo={data?.bill_to}
+          shipTo={data?.ship_to}
+          onChange={() => {}}
+        />
+      </div>
       {data?.items && (
         <>
           <h3 className="font-medium">Line Items</h3>
@@ -372,6 +373,7 @@ export default function Detail(): ReactNode {
               <Price value={data?.discount} />)
             </dd>
           </dl>
+          {/*
           <dl className="flex justify-between gap-x-4">
             <dt className="">Vat Sales:</dt>
             <dd>
@@ -384,6 +386,7 @@ export default function Detail(): ReactNode {
               <Price value={data?.vat_amount} />
             </dd>
           </dl>
+            */}
           <dl className="flex justify-between gap-x-4 font-bold">
             <dt className="">Total:</dt>
             <dd>
