@@ -12,7 +12,7 @@ import useUpdateData from "../hooks/useUpdateData";
 import Textarea from "@renderer/shared/components/ui/Textarea";
 import { headers, isStatusLocked, mapper } from "../utils";
 import useCustomerSearch from "../hooks/useCustomerSearch";
-import Summary from "@renderer/features/pos/components/Summary";
+import Summary from "@renderer/features/salesLog/components/Summary";
 import SalesOrderItemsRow from "../components/SaleOrderItemsRow";
 import CustomerSearch from "../components/CustomerSearch";
 import { ReturnSalesOrderType } from "src/main/interfaces/ISalesOrderRepository";
@@ -76,7 +76,7 @@ export default function SalesOrder(): ReactNode {
       header={{
         left: {
           title: `${id === "new" ? "New" : salesOrder?.order_number}`,
-          subTitle: `Sales Order`,
+          subTitle: `Order`,
         },
       }}
       isPending={isSalesOrderPending}

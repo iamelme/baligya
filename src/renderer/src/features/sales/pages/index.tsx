@@ -14,7 +14,7 @@ import Badge from "@renderer/shared/components/ui/Badge";
 import Pagination2 from "@renderer/shared/components/Pagination2";
 
 const headers = [
-  { label: "Invoice No.", className: "" },
+  { label: "Sale Record", className: "" },
   { label: "Date", className: "" },
   { label: "Subtotal", className: "text-right" },
   { label: "Discount", className: "text-right" },
@@ -35,10 +35,10 @@ const StatusWrapper = ({
       return <Badge variant="success">{children}</Badge>;
     case "partial_return":
       return <Badge variant="warning">{children}</Badge>;
-    case "return":
-      return <Badge>{children}</Badge>;
-    default:
+    case "void":
       return <Badge variant="danger">{children}</Badge>;
+    default:
+      return <Badge>{children}</Badge>;
   }
 };
 
@@ -105,7 +105,7 @@ export default function Sales(): ReactNode {
         header={{
           left: {
             title: "Sales",
-            subTitle: "Sales Invoice",
+            subTitle: "Sale Record",
           },
           right: (
             <>

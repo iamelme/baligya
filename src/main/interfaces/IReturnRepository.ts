@@ -6,5 +6,5 @@ export type Return = {
 };
 
 export interface IReturnRepository {
-  create({ sale_id, user_id, items, refund_amount }: ReturnType): Return;
+  create({ sale_id, user_id, items, amount }: ReturnType): Return;
 }

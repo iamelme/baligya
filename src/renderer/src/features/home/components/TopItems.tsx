@@ -1,40 +1,37 @@
-import Card from '@renderer/shared/components/ui/Card'
-import Alert from '@renderer/shared/components/ui/Alert'
-import { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
-import useTopItems from '@renderer/shared/hooks/useTopItems'
+import Card from "@renderer/shared/components/ui/Card";
+import Alert from "@renderer/shared/components/ui/Alert";
+import { ReactNode } from "react";
+import { Link } from "react-router-dom";
+import useTopItems from "@renderer/shared/hooks/useTopItems";
 
 export default function TopItems(): ReactNode {
-  const date = new Date()
-  const startDate = new Date(date.getFullYear(), date.getMonth(), 1)
-  const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0)
+  const date = new Date();
+  const startDate = new Date(date.getFullYear(), date.getMonth(), 1);
+  const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
 
-  const { data, isPending, error } = useTopItems({ startDate, endDate })
+  const { data, isPending, error } = useTopItems({ startDate, endDate });
   if (isPending) {
-    return <>Loading...</>
+    return <>Loading...</>;
   }
 
   if (error) {
-    return <Alert variant="danger">{error.message}</Alert>
+    return <Alert variant="danger">{error.message}</Alert>;
   }
 
   if (!data) {
-    return
+    return;
   }
 
   return (
     <Card
-      className='h-full'
+      className="h-full"
       header={
         <div className="flex justify-between ">
           <div>
-            <h2 className="text-md font-bold">Top Selling Products</h2>
+            <h2 className="text-md font-bold">Top Items</h2>
             <p className="text-xs opacity-70">This month</p>
           </div>
-          {
-            data?.length > 4 &&
-            <Link to="/reports/sales">See more</Link>
-          }
+          {data?.length > 4 && <Link to="/reports/sales">See more</Link>}
         </div>
       }
       content={
@@ -49,5 +46,5 @@ export default function TopItems(): ReactNode {
         </ul>
       }
     />
-  )
+  );
 }

@@ -24,13 +24,13 @@ const menu = [
     icon: <Home size={14} />,
   },
   {
-    label: "Sales Order",
+    label: "Orders",
     to: "/so",
     icon: <ShoppingCart size={14} />,
   },
   {
-    label: "POS",
-    to: "/pos",
+    label: "Sales Log",
+    to: "/sales-log",
     icon: <ShoppingCart size={14} />,
   },
   {
@@ -43,7 +43,7 @@ const menu = [
         icon: <Grid size={14} />,
       },
       {
-        label: "Products",
+        label: "Items",
         to: `/products`,
         icon: <Box size={14} />,
       },
@@ -55,21 +55,21 @@ const menu = [
     icon: <DollarSign size={14} />,
   },
   {
-    label: "Inventory",
+    label: "Stock",
     to: `/inventory`,
     icon: <Database size={14} />,
   },
   {
-    label: "Sales",
+    label: "Summary",
     to: `/sales`,
     icon: <TrendingUp size={14} />,
   },
   {
-    label: "Reports",
+    label: "Insights",
     icon: <PieChart size={14} />,
     children: [
       {
-        label: "Sales",
+        label: "Sales Overview",
         to: `/reports/sales`,
         icon: <TrendingUp size={14} />,
       },

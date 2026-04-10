@@ -14,6 +14,8 @@ import {
   ReturnRevenueType,
   SaleItemType,
   SaleType,
+  ReturnType as ReturnsType,
+  ReturnItemType,
 } from "../../renderer/src/shared/utils/types";
 import { ipcMain } from "electron";
 import { AppDatabase } from "../database/db";
@@ -217,21 +219,43 @@ export class SaleRepository implements ISaleRepository {
   getById(id: number): ReturnType {
     const db = this._database.getDb();
     try {
-      const transaction = db.transaction(() => {
-        const sales = db
-          .prepare(
-            `
-          SELECT  s.*, p.amount, p.method
-          FROM sales AS s
-          LEFT JOIN payments AS p ON p.sale_id = s.id
-          WHERE s.id = ?
+      const stmsSale = db.prepare(
+        `
+          SELECT
+            s.*,
+            COALESCE(p.amount, 0) AS amount,
+            p.method,
+            r.amount AS return_amount
+          FROM
+            sales AS s
+          LEFT JOIN (
+            SELECT
+              sale_id,
+              method,
+              SUM(amount) AS amount
+            FROM
+              payments
+            GROUP BY
+              sale_id
+          ) AS p
+          ON
+            p.sale_id = s.id
+          LEFT JOIN (
+            SELECT
+              sale_id,
+              amount
+            FROM
+              returns
+          ) AS r
+          ON
+            r.sale_id = s.id
+          WHERE
+            s.id = ?
           `,
-          )
-          .get(id) as SaleType & { amount: number; method: string };
+      );
 
-        const saleItems = db
-          .prepare(
-            `
+      const stmtSaleItems = db.prepare(
+        `
             SELECT
               si.*,
               p.name,
@@ -253,12 +277,37 @@ export class SaleRepository implements ISaleRepository {
             GROUP BY
               si.product_id;
             `,
-          )
-          .all(id) as SaleItemType[];
+      );
+
+      const stmtReturn = db.prepare(
+        `
+        SELECT
+          *
+        FROM
+          returns
+        WHERE
+          sale_id = ?
+        `,
+      );
+
+      const transaction = db.transaction(() => {
+        const sales = stmsSale.get(id) as SaleType & {
+          amount: number;
+          method: string;
+        };
+
+        const saleItems = stmtSaleItems.all(id) as Array<
+          SaleItemType & {
+            disposition: ReturnItemType["disposition"];
+          }
+        >;
+
+        const returns = stmtReturn.all(id) as ReturnsType[];
 
         return {
           sales,
           saleItems,
+          returns,
         };
       });
 
@@ -272,6 +321,7 @@ export class SaleRepository implements ISaleRepository {
         data: {
           ...res.sales,
           items: res.saleItems,
+          returns: res.returns,
         },
         error: "",
       };
@@ -332,7 +382,7 @@ export class SaleRepository implements ISaleRepository {
       //   ) AS p,
       //   (
       //     SELECT
-      //       SUM(COALESCE(refund_amount, 0))  AS total_return
+      //       SUM(COALESCE(amount, 0))  AS total_return
       //     FROM
       //       returns
       //     WHERE
@@ -342,7 +392,7 @@ export class SaleRepository implements ISaleRepository {
       //   ) AS r,
       //   (
       //     SELECT
-      //       SUM(COALESCE(refund_amount, 0))  AS prev_total_return
+      //       SUM(COALESCE(amount, 0))  AS prev_total_return
       //     FROM
       //       returns
       //     WHERE
@@ -353,14 +403,13 @@ export class SaleRepository implements ISaleRepository {
       const stmt = `
       WITH
 sales_summary AS (
-  SELECT
-  created_at,
+SELECT
+    created_at,
     STRFTIME('%m', created_at) AS month,
-    SUM(total) AS gross_revenue
-  FROM sales
+    SUM(amount) AS gross_revenue
+  FROM
+    payments
  WHERE
-	status != 'void'
-	AND
 		created_at >=
 			STRFTIME('%m', :startDate, '-1 month')
 		AND
@@ -382,10 +431,12 @@ returns_summary AS (
 	SELECT
 		created_at,
     STRFTIME('%m', created_at) AS month,
-		SUM(refund_amount) AS total_return
+		SUM(amount) AS total_return
 	FROM
 		returns
 		WHERE
+    method != 'credit_memo'
+    AND
 	created_at >=
 			STRFTIME('%m', :startDate, '-1 month')
 		AND
@@ -962,34 +1013,74 @@ WHERE
     try {
       const db = this._database.getDb();
       const stmt = db.prepare(`
-        UPDATE sales
-        SET status = ?
-        WHERE id = ?
+        UPDATE
+          sales
+        SET
+          status = :status,
+          sub_total = :sub_total,
+          discount = :discount,
+          total = :total
+        WHERE
+          id = :id
         RETURNING id
       `);
 
+      const stmtSale = db.prepare(
+        `
+        SELECT
+          sub_total,
+          discount,
+          total
+        FROM
+          sales
+        WHERE
+          id = ?
+        `,
+      );
+
       const itemStmt = db.prepare(
         `
-            SELECT si.id, si.product_id, si.quantity, i.id AS inventory_id, i.quantity AS old_quantity
-            FROM sale_items si
-            LEFT JOIN inventory i ON si.product_id = i.product_id
-            WHERE si.sale_id = ?
-            `,
+        SELECT
+          si.id,
+          si.product_id,
+          si.quantity,
+          si.unit_price,
+          i.id AS inventory_id,
+          SUM(COALESCE(ri.quantity, 0)) AS return_qty
+        FROM
+          sale_items AS si
+        LEFT JOIN
+          inventory AS i
+        ON
+          si.product_id = i.product_id
+        LEFT JOIN (
+            SELECT
+              sale_item_id,
+              quantity
+            FROM
+              return_items
+        ) AS ri
+        ON
+          ri.sale_item_id = si.id
+        WHERE
+          si.sale_id = ?
+        GROUP BY
+          si.product_id
+        `,
       );
 
       const transaction = db.transaction(() => {
         console.log("status to be updated", status);
-        const sales = stmt.run(status, id);
 
-        // only status void can restore product inventory
+        const sale = stmtSale.get(id) as SaleType;
+
+        let subTotal = sale.sub_total || 0,
+          discount = sale.discount || 0,
+          total = sale.total || 0;
+
+        const items = itemStmt.all(id) as Array<SaleItemType>;
         if (status === "void") {
-          const items = itemStmt.all(id) as Array<
-            SaleItemType & { old_quantity: number }
-          >;
-
-          for (let i = 0; i < items.length; i++) {
-            const item = items[i];
-
+          for (const item of items) {
             const resItem = this._inventory.update({
               quantity: item.quantity,
               id: item.inventory_id,
@@ -1003,11 +1094,30 @@ WHERE
               throw new Error("Something went wrong while updating the sale");
             }
           }
-
-          if (!sales) {
-            throw new Error("Something went wrong while updating the sale");
-          }
+        } else if (status === "partial_return" || status === "return") {
+          // let temp = 0;
+          // for (const item of items) {
+          //   console.log({ item });
+          //   const finalQty = item.quantity - item.return_qty;
+          //   temp += finalQty * item.unit_price;
+          // }
+          // subTotal = temp;
         }
+
+        // total = subTotal - discount;
+
+        const sales = stmt.run({
+          status,
+          sub_total: subTotal,
+          discount,
+          total,
+          id,
+        });
+
+        if (!sales) {
+          throw new Error("Something went wrong while updating the sale");
+        }
+
         return true;
       });
       transaction();

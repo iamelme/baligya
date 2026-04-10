@@ -42,8 +42,8 @@ export default function Top(): ReactNode {
       <ListPage
         header={{
           left: {
-            title: "Top Products",
-            subTitle: "Top selling products",
+            title: "Top Items",
+            subTitle: "Top Items",
           },
           right: (
             <>

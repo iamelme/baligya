@@ -131,16 +131,26 @@ export type ReturnSaleType = {
   id: number;
   created_at: Date;
   invoice_number: string;
-  status: string;
-  items: Array<SaleItemType & { available_qty: number }>;
+  status: SaleType["status"];
+  returns?: ReturnType[];
+  items: Array<
+    SaleItemType & {
+      available_qty: number;
+      disposition: ReturnItemType["disposition"];
+    }
+  >;
   sub_total: number;
   discount: number;
   vatable_sales: number;
   vat_amount: number;
   total: number;
   amount: number;
+  // return_amount: number;
   method: string;
   customer_name?: string;
+  bill_to?: string;
+  ship_to?: string;
+  notes?: string;
 };
 
 export type PlaceOrderType = {
@@ -180,7 +190,8 @@ export type PaymentMethod = "cash" | "card" | "e-wallet";
 export type ReturnType = {
   id: number;
   created_at: string;
-  refund_amount: number;
+  amount: number;
+  method: "credit_memo" | "cash" | "e-wallet";
   items: ReturnItemType[];
   sale_id: number;
   user_id: number;
@@ -193,6 +204,7 @@ export type ReturnItemType = {
   quantity: number;
   old_quantity: number;
   available_qty: number;
+  disposition: "restock" | "waste";
   return_id: number;
   inventory_id: number;
   user_id: number;
