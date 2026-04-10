@@ -91,7 +91,7 @@ function Header({ children }: { children: ReactNode }): ReactNode {
 }
 
 function Body({ children }: { children: ReactNode }): ReactNode {
-  return <footer className="py-4 px-3">{children}</footer>;
+  return <div className="py-4 px-3">{children}</div>;
 }
 
 function Footer({ children }: { children: ReactNode }): ReactNode {
