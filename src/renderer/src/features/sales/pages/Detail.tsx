@@ -269,9 +269,9 @@ export default function Detail(): ReactNode {
 
   const returnable = data?.items?.some((item) => item.available_qty > 0);
 
-  const isLocked = ["void", "partial_return", "return"].find(
-    (status) => status === data?.status,
-  );
+  // const isLocked = ["void", "partial_return", "return"].find(
+  //   (status) => status === data?.status,
+  // );
 
   const cashRefund =
     data?.returns?.reduce(

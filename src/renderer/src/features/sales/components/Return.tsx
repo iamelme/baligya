@@ -1,8 +1,4 @@
-import {
-  ReturnItemType,
-  SaleItemType,
-  SaleType,
-} from "@renderer/shared/utils/types";
+import { ReturnItemType, SaleItemType } from "@renderer/shared/utils/types";
 import Items from "@renderer/shared/components/Items";
 import Dialog from "@renderer/shared/components/ui/Dialog";
 import { ChangeEvent, ReactNode, RefObject } from "react";
@@ -14,11 +10,11 @@ import Button from "@renderer/shared/components/ui/Button";
 import { numericFormatLimit } from "@renderer/shared/utils";
 import { CornerUpLeft } from "react-feather";
 import Select from "@renderer/shared/components/ui/Select";
-import Textarea from "@renderer/shared/components/ui/Textarea";
+// import Textarea from "@renderer/shared/components/ui/Textarea";
 
 type ReturnProp = {
   ref: RefObject<HTMLButtonElement | null>;
-  status: SaleType["status"];
+  // status: SaleType["status"];
   items: SaleItemType[];
   onToggleAll: (e: ChangeEvent<HTMLInputElement>) => void;
   onToggleSelect: (
@@ -49,11 +45,11 @@ type ReturnProp = {
   onReturn: () => void;
 };
 
-const options = [
-  { value: "cash", label: "Cash" },
-  { value: "e-wallet", label: "E-wallet" },
-  { value: "credit_memo", label: "Credit Memo" },
-];
+// const options = [
+//   { value: "cash", label: "Cash" },
+//   { value: "e-wallet", label: "E-wallet" },
+//   { value: "credit_memo", label: "Credit Memo" },
+// ];
 
 const dispositionOptions = [
   { value: "restock", label: "Restock" },
@@ -62,7 +58,7 @@ const dispositionOptions = [
 
 export default function Return({
   ref,
-  status,
+  // status,
   items,
   onToggleAll,
   onToggleSelect,
