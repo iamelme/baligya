@@ -4,6 +4,8 @@ import { ReturnType, SaleType } from "../../renderer/src/shared/utils/types";
 import { IInventoryRepository } from "../interfaces/IInventoryRepository";
 import { ISaleRepository } from "../interfaces/ISaleRepository";
 import { AppDatabase } from "../database/db";
+import { errorMapper } from "../utils";
+import Database from "better-sqlite3";
 
 export class ReturnRepository implements IReturnRepository {
   private _database: AppDatabase;
@@ -24,7 +26,7 @@ export class ReturnRepository implements IReturnRepository {
   }
 
   create(params: ReturnType): Return {
-    const { sale_id, user_id, items, refund_amount } = params;
+    const { sale_id, user_id, items } = params;
 
     console.log({ params });
     const db = this._database.getDb();
@@ -38,17 +40,57 @@ export class ReturnRepository implements IReturnRepository {
     const insertReturn = db.prepare(
       `
                 INSERT INTO returns
-                (created_at, refund_amount, sale_id, user_id)
-                VALUES(?, ?, ?, ?)
+                (created_at, amount, method, sale_id, user_id)
+                VALUES(?, ?, ?, ?, ?)
                 `,
     );
 
     const insertReturnItem = db.prepare(
       `
                 INSERT INTO return_items
-                (created_at, return_id, quantity, refund_price, product_id, sale_item_id)
-                VALUES(?, ?, ?, ?, ?, ?);
+                (created_at, return_id, quantity, refund_price, disposition, product_id, sale_item_id)
+                VALUES(?, ?, ?, ?, ?, ?, ?);
                 `,
+    );
+    // amount INTEGER,
+    // return_id INTEGER,
+    // customer_id INTEGER,
+    // user_id INTEGER,
+    // sale_id INTEGER,
+
+    const insertCM = db.prepare(
+      `
+      INSERT INTO credit_memos
+      (created_at, return_id, amount, sale_id, user_id)
+      VALUES(?, ?, ?, ?, ?)
+      `,
+    );
+
+    // quantity INTEGER,
+    // unit_price INTEGER,
+    // credit_memo_id INTEGER,
+    // product_id INTEGER,
+    // sale_item_id INTEGER,
+
+    const insertCMItem = db.prepare(
+      `
+      INSERT INTO credit_memo_items
+      (created_at, quantity, unit_price, credit_memo_id, product_id, sale_item_id)
+      VALUES(?, ?, ?, ?, ?, ?)
+      `,
+    );
+
+    const stmtReturns = db.prepare(
+      `
+      SELECT
+        *
+      FROM
+        returns
+      WHERE
+        sale_id = ?
+      AND
+        method != 'credit_memo'
+      `,
     );
 
     begin.run();
@@ -56,6 +98,9 @@ export class ReturnRepository implements IReturnRepository {
     try {
       //   console.log('trans start')
       console.log("items", items);
+      if (!items.length) {
+        throw new Error("No items selected");
+      }
       const hasChanges = items.every((item) => item.quantity > 0);
       if (!hasChanges) {
         throw new Error("No changes");
@@ -69,50 +114,148 @@ export class ReturnRepository implements IReturnRepository {
         throw new Error("Couldn't check its sales data");
       }
 
-      const { items: saleItems } = sales.data;
+      const returns = stmtReturns.all(sale_id) as ReturnType[];
 
-      const newItems = saleItems?.reduce((acc, cur) => {
+      const returnAmount = returns?.reduce(
+        (acc, cur) => (acc += cur?.amount || 0),
+        0,
+      );
+
+      const { items: saleItems, amount = 0, total = 0 } = sales.data;
+
+      // check the amount <= 0 then it is unpaid
+      // then it goes to credit memo and and reduce balance due
+
+      console.log({ saleItems });
+
+      const areAllReturned = saleItems?.reduce((acc, cur) => {
         const foundItem = items.find((item) => item.sale_item_id === cur.id);
 
-        console.log({ foundItem, cur });
+        if (!acc) {
+          return false;
+        }
 
-        if (foundItem && cur.available_qty >= foundItem.quantity) {
-          acc.push(cur.available_qty - foundItem.quantity === 0);
+        if (!foundItem && cur.available_qty !== 0) {
+          return false;
+        }
+
+        if (foundItem) {
+          return cur.available_qty - foundItem.quantity === 0;
         }
 
         return acc;
-      }, [] as boolean[]);
+      }, true);
 
-      console.log({ newItems });
+      console.log({ areAllReturned });
 
-      const areAllReturned =
-        newItems.length === saleItems.length && newItems.every((item) => item);
+      // const areAllReturned = saleItems?.every(item => item.return_qty ===)
+      const totalReturnAmount =
+        items.reduce(
+          (acc, item) =>
+            (acc += (item?.quantity || 0) * (item?.refund_price || 0)),
+          0,
+        ) + returnAmount;
 
-      const res = insertReturn.run(createdAt, refund_amount, sale_id, user_id);
+      let resInserCM: Database.RunResult | undefined;
+      let resInserReturn: Database.RunResult | undefined;
 
-      console.log({ res });
-      console.log({ items });
+      let method = "cash";
 
-      if (!res.changes) {
-        throw new Error("Something went wrong while creating a return order");
+      const balance = totalReturnAmount - amount;
+
+      if (amount === 0) {
+        // unpaid
+        resInserReturn = insertReturn.run(
+          createdAt,
+          balance,
+          "credit_memo",
+          sale_id,
+          user_id,
+        );
+        resInserCM = insertCM.run(
+          createdAt,
+          resInserReturn.lastInsertRowid,
+          balance,
+          sale_id,
+          user_id,
+        );
+      } else if (amount === total) {
+        // complete
+        resInserReturn = insertReturn.run(
+          createdAt,
+          totalReturnAmount,
+          "cash",
+          sale_id,
+          user_id,
+        );
+      } else {
+        // partial paid
+
+        if (totalReturnAmount > amount) {
+          const creditMemoAmount = totalReturnAmount - amount;
+          const cashRefund = amount - returnAmount;
+
+          resInserReturn = insertReturn.run(
+            createdAt,
+            creditMemoAmount,
+            "credit_memo",
+            sale_id,
+            user_id,
+          );
+
+          resInserCM = insertCM.run(
+            createdAt,
+            resInserReturn.lastInsertRowid,
+            creditMemoAmount,
+            sale_id,
+            user_id,
+          );
+
+          if (cashRefund) {
+            insertReturn.run(createdAt, cashRefund, method, sale_id, user_id);
+          }
+        } else {
+          resInserReturn = insertReturn.run(
+            createdAt,
+            totalReturnAmount,
+            method,
+            sale_id,
+            user_id,
+          );
+        }
       }
+
+      // const res = insertReturn.run(
+      //   createdAt,
+      //   totalReturnAmount,
+      //   method,
+      //   sale_id,
+      //   user_id,
+      // );
+      //
+      // console.log({ res });
+      // console.log({ items });
+
+      // if (!res.changes) {
+      //   throw new Error("Something went wrong while creating a return order");
+      // }
 
       //   console.log('start items')
 
       for (const item of items) {
-        const resInv = this._inventory.update({
-          quantity: item.quantity,
-          id: item.inventory_id,
-          product_id: item.product_id,
-          user_id: item.user_id,
-          movement_type: 0,
-          reference_type: "return",
-        });
-
-        console.log({ resInv });
-
-        if (!resInv.success && resInv.error instanceof Error) {
-          throw new Error(resInv.error.message);
+        console.log("return item", item);
+        if (item.disposition === "restock") {
+          const resInv = this._inventory.update({
+            quantity: item.quantity,
+            id: item.inventory_id,
+            product_id: item.product_id,
+            user_id: item.user_id,
+            movement_type: 0,
+            reference_type: "return",
+          });
+          if (!resInv.success && resInv.error instanceof Error) {
+            throw new Error(resInv.error.message);
+          }
         }
 
         if (item.available_qty < 1) {
@@ -121,9 +264,10 @@ export class ReturnRepository implements IReturnRepository {
 
         const resItem = insertReturnItem.run(
           createdAt,
-          res.lastInsertRowid,
+          resInserReturn.lastInsertRowid,
           item.quantity,
           item.refund_price,
+          item.disposition,
           item.product_id,
           item.sale_item_id,
         );
@@ -132,6 +276,25 @@ export class ReturnRepository implements IReturnRepository {
 
         if (!resItem.changes) {
           throw new Error("Something went wrong while creating a return item");
+        }
+
+        console.log({ resInserCM });
+
+        if (resInserCM !== undefined && resInserCM.changes) {
+          const res = insertCMItem.run(
+            createdAt,
+            item.quantity,
+            (item.quantity || 0) * (item.refund_price || 0),
+            resInserCM.lastInsertRowid,
+            item.product_id,
+            item.sale_item_id,
+          );
+
+          if (!res.changes) {
+            throw new Error(
+              "Something went wrong while creating a credit memo item",
+            );
+          }
         }
       }
 
@@ -153,19 +316,23 @@ export class ReturnRepository implements IReturnRepository {
         rollback.run();
       }
       //   console.error('error', error)
-
-      if (error instanceof Error) {
-        return {
-          data: null,
-          error: new Error(
-            "Something went wrong while creating a return order",
-          ),
-        };
-      }
       return {
         data: null,
-        error: new Error("Something went wrong while creating a return order"),
+        error: errorMapper(error),
       };
+
+      // if (error instanceof Error) {
+      //   return {
+      //     data: null,
+      //     error: new Error(
+      //       "Something went wrong while creating a return order",
+      //     ),
+      //   };
+      // }
+      // return {
+      //   data: null,
+      //   error: new Error("Something went wrong while creating a return order"),
+      // };
     }
   }
 }
