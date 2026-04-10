@@ -10,13 +10,15 @@ import {
 import { ReturnItemType } from "@renderer/shared/utils/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChangeEvent, ReactNode, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import useBoundStore from "@renderer/shared/stores//boundStore";
 import Return from "../components/Return";
 import Badge from "@renderer/shared/components/ui/Badge";
 import { FileText, Printer, XCircle } from "react-feather";
 import { SettingsType } from "../../../shared/utils/types";
 import Mark from "@renderer/features/salesOrders/components/Mark";
+import Pay from "../components/Pay";
+import SaleItemsRow from "../components/SaleItemsRow";
 const headers = [
   { label: "Name", className: "" },
   { label: "Quantity", className: "text-right" },
@@ -269,9 +271,9 @@ export default function Detail(): ReactNode {
 
   const returnable = data?.items?.some((item) => item.available_qty > 0);
 
-  // const isLocked = ["void", "partial_return", "return"].find(
-  //   (status) => status === data?.status,
-  // );
+  const isLocked = ["void", "partial_return", "return"].find(
+    (status) => status === data?.status,
+  );
 
   const cashRefund =
     data?.returns?.reduce(
@@ -295,8 +297,13 @@ export default function Detail(): ReactNode {
             Go Back
           </Button>
         </div>
-        <div className="text-right">
+        <div className="">
           <div className="flex justify-end gap-x-2 mb-4">
+            {!isLocked && data?.status !== "complete" && (
+              <div>
+                <Pay />
+              </div>
+            )}
             <div>
               <Button variant="outline" size="sm" onClick={handlePrintPDF}>
                 <Printer size={14} /> Print PDF
@@ -310,18 +317,18 @@ export default function Detail(): ReactNode {
             {data?.status !== "void" && returnable && (
               <Return
                 ref={refReturnBtn}
+                // status={data.status}
                 items={data.items}
                 onToggleAll={handleToggleAll}
                 onToggleSelect={handleToggleSelect}
                 selectedItems={selectedItems}
                 onSelectedItems={setSelectedItems}
                 errorMessage={mutationReturn.error?.message}
+                onClear={mutationReturn.reset}
                 onReturn={mutationReturn.mutate}
               />
             )}
-            {!["void", "partial_return", "return"].find(
-              (status) => status === data?.status,
-            ) && (
+            {!isLocked && data?.status !== "complete" && (
               <Button
                 variant="danger"
                 onClick={() => mutationUpdateStatus.mutate("void")}
@@ -331,18 +338,16 @@ export default function Detail(): ReactNode {
             )}
           </div>
 
-          <h2 className="font-bold">Sale Record</h2>
-          <p className="text-xl">{data?.invoice_number}</p>
-          <p>{new Date(data.created_at).toLocaleString()}</p>
-          <p>
-            {mutationUpdateStatus.error && (
-              <Alert className="my-3" variant="danger">
-                {mutationUpdateStatus.error?.message}
-              </Alert>
-            )}
-
-            <Badge>{humanize(data.status)}</Badge>
-          </p>
+          <div className="text-right">
+            <h2 className="font-bold">Sale Record</h2>
+            <p className="text-xl">{data?.invoice_number}</p>
+            <p>{new Date(data.created_at).toLocaleString()}</p>
+            <div className="flex gap-x-2 justify-end">
+              <div>
+                <Badge>{humanize(data.status)}</Badge>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <div className="my-3">
@@ -365,26 +370,7 @@ export default function Detail(): ReactNode {
             <Items
               items={data.items}
               headers={headers}
-              renderItems={(item) => (
-                <>
-                  <td>
-                    <Link to={`/products/${item.product_id}`}>
-                      {item.name}
-                      {item.code}
-                    </Link>
-                  </td>
-                  <td className="text-right">{item.quantity}</td>
-                  <td className="text-right">
-                    <Price value={item.unit_cost} />
-                  </td>
-                  <td className="text-right">
-                    <Price value={item.unit_price} />
-                  </td>
-                  <td className="text-right">
-                    <Price value={item.unit_price * item.quantity} />
-                  </td>
-                </>
-              )}
+              renderItems={(item) => <SaleItemsRow key={item.id} item={item} />}
             />
           </div>
         </>
