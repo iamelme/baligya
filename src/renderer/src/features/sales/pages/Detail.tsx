@@ -20,6 +20,7 @@ import Mark from "@renderer/features/salesOrders/components/Mark";
 const headers = [
   { label: "Name", className: "" },
   { label: "Quantity", className: "text-right" },
+  { label: "Returned", className: "text-right" },
   { label: "Unit Cost", className: "text-right" },
   { label: "Unit Price", className: "text-right" },
   { label: "Total", className: "text-right" },
@@ -35,7 +36,15 @@ export default function Detail(): ReactNode {
   const refReturnBtn = useRef<HTMLButtonElement | null>(null);
 
   const [selectedItems, setSelectedItems] = useState<
-    Map<string, { isChecked: boolean; price: number; newQty: number }>
+    Map<
+      string,
+      {
+        isChecked: boolean;
+        price: number;
+        newQty: number;
+        disposition: ReturnItemType["disposition"];
+      }
+    >
   >(new Map());
 
   const { data, isPending, error } = useQuery({
@@ -107,6 +116,7 @@ export default function Detail(): ReactNode {
           refund_price: value.price,
           inventory_id: found.inventory_id,
           available_qty: found.available_qty,
+          disposition: value.disposition ?? "restock",
           user_id: user.id,
           sale_id: Number(id),
           sale_item_id: Number(key),
@@ -117,11 +127,13 @@ export default function Detail(): ReactNode {
         sale_id: Number(id),
         user_id: user.id,
         items,
-        refund_amount: items.reduce(
+        method: "cash" as const,
+        amount: items.reduce(
           (acc, cur) => (acc += cur.refund_price * (cur.quantity ?? 0)),
           0,
         ),
       };
+
       const { error } = await window.apiReturn.create(payload);
 
       if (error instanceof Error) {
@@ -174,6 +186,7 @@ export default function Detail(): ReactNode {
             isChecked: true,
             price: data?.items?.find((item) => item.id === id)?.unit_price ?? 0,
             newQty: data?.items?.find((item) => item.id === id)?.quantity ?? 0,
+            disposition: items.get(`${id}`)?.disposition || "restock",
           })
         : items.delete(`${id}`);
 
@@ -188,6 +201,7 @@ export default function Detail(): ReactNode {
             price:
               data?.items?.find((item) => item.id === cur.id)?.unit_price ?? 0,
             newQty: items.get(`${cur.id}`)?.newQty || cur.available_qty,
+            disposition: items.get(`${cur.id}`)?.disposition || "restock",
           };
 
           return acc;
@@ -253,7 +267,25 @@ export default function Detail(): ReactNode {
     }
   };
 
-  const returnable = data?.items?.every((item) => item.available_qty > 0);
+  const returnable = data?.items?.some((item) => item.available_qty > 0);
+
+  const isLocked = ["void", "partial_return", "return"].find(
+    (status) => status === data?.status,
+  );
+
+  const cashRefund =
+    data?.returns?.reduce(
+      (acc, cur) => (cur.method !== "credit_memo" ? (acc += cur.amount) : 0),
+      0,
+    ) || 0;
+  const creditRefund =
+    data?.returns?.reduce(
+      (acc, cur) => (acc += cur.method === "credit_memo" ? cur.amount : 0),
+      0,
+    ) || 0;
+
+  const amount = data?.amount - cashRefund;
+  const amountDue = data?.total - creditRefund - amount;
 
   return (
     <div className="py-4">
@@ -399,16 +431,23 @@ export default function Detail(): ReactNode {
               <Price value={data?.amount} />
             </dd>
           </dl>
-          <dl className="flex justify-between gap-x-4 ">
-            <dt className="">Change Due:</dt>
-            <dd>
-              <Price value={data?.total - data?.amount} />
-            </dd>
-          </dl>
+          {data?.returns?.map((r) => (
+            <dl key={r.id} className="flex justify-between gap-x-4">
+              <dt className="">
+                {r?.method === "credit_memo" ? "Credit" : "Refund"} Amount:
+              </dt>
+              <dd>
+                (
+                <Price value={r.amount} />)
+              </dd>
+            </dl>
+          ))}
 
           <dl className="flex justify-between gap-x-4 border-t border-b my-3 py-3">
-            <dt className="">Payment Method:</dt>
-            <dd>{humanize(data?.method)}</dd>
+            <dt className="">Change Due:</dt>
+            <dd>
+              <Price value={amountDue} />
+            </dd>
           </dl>
         </div>
       </div>
