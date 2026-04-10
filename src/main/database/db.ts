@@ -107,7 +107,8 @@ export class AppDatabase {
             CREATE TABLE IF NOT EXISTS returns(
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               created_at DATETIME,
-              refund_amount INTEGER,
+              amount INTEGER,
+              reason TEXT,
               method TEXT,
               user_id INTEGER,
               sale_id INTEGER,
@@ -122,6 +123,7 @@ export class AppDatabase {
               refund_price INTEGER,
               return_id INTEGER,
               sale_item_id INTEGER,
+              disposition TEXT NOT NULL DEFAULT 'restock', -- restock, waste
               product_id INTEGER,
               FOREIGN KEY (return_id) REFERENCES returns(id),
               FOREIGN KEY (sale_item_id) REFERENCES sale_items(id),
