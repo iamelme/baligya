@@ -44,6 +44,7 @@ import {
   ReturnSalesOrderType,
   UpdateSalesOrderParams,
 } from "src/main/interfaces/ISalesOrderRepository";
+import { PaymentParams } from "src/main/interfaces/ISaleRepository";
 
 // type ProdInventoryType = {
 //   id: number
@@ -174,6 +175,10 @@ export const apiSale = {
     saleId: number,
   ): Promise<{ success: boolean; error: ErrorType }> =>
     ipcRenderer.invoke("sale:deleteAllItems", saleId),
+  pay: (
+    params: PaymentParams,
+  ): Promise<{ success: boolean; error: ErrorType }> =>
+    ipcRenderer.invoke("sale:pay", params),
 };
 
 export const apiReturn = {

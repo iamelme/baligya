@@ -7,6 +7,7 @@ import {
   TopItemsType,
   GetAllParams,
   ReturnAllType,
+  PaymentParams,
 } from "../interfaces/ISaleRepository";
 import {
   ErrorType,
@@ -16,9 +17,12 @@ import {
   SaleType,
   ReturnType as ReturnsType,
   ReturnItemType,
+  ReturnSaleType,
+  PaymentType,
 } from "../../renderer/src/shared/utils/types";
 import { ipcMain } from "electron";
 import { AppDatabase } from "../database/db";
+import { errorMapper } from "../utils";
 
 export class SaleRepository implements ISaleRepository {
   private _database: AppDatabase;
@@ -65,6 +69,75 @@ export class SaleRepository implements ISaleRepository {
     ipcMain.handle("sale:deleteAllItems", (_, sale_id: number) =>
       this.deleteAllItems(sale_id),
     );
+    ipcMain.handle("sale:pay", (_, params: PaymentParams) => this.pay(params));
+  }
+
+  pay(params: PaymentParams): {
+    success: boolean;
+    error: ErrorType;
+  } {
+    const { id, amount, refNo = "", method = "cash" } = params;
+
+    const db = this._database.getDb();
+    const stmtPay = db.prepare(
+      `
+      INSERT INTO payments (amount, reference_number, method, sale_id)
+      VALUES(?, ?, ?, ?)
+      `,
+    );
+
+    const stmtSale = db.prepare(
+      `
+      SELECT
+        s.total,
+        COALESCE(SUM(p.amount), 0) AS amount
+      FROM
+        sales AS s
+      LEFT JOIN (
+        SELECT
+          sale_id,
+          amount
+        FROM
+          payments
+      ) AS p
+      ON
+        p.sale_id = s.id
+      WHERE
+        s.id = ?
+      `,
+    );
+
+    const normalizeAmount = amount * 100;
+    try {
+      const transaction = db.transaction(() => {
+        const { total, amount: amount_paid } = stmtSale.get(
+          id,
+        ) as ReturnSaleType;
+
+        const totalPaid = amount_paid + normalizeAmount;
+
+        console.log({ total, totalPaid });
+
+        stmtPay.run(normalizeAmount, refNo, method, id);
+        if (totalPaid >= total) {
+          this.updateStatus({ id, status: "complete" });
+        } else if (total >= totalPaid) {
+          this.updateStatus({ id, status: "partial_paid" });
+        }
+      });
+
+      transaction();
+
+      return {
+        success: true,
+        error: "",
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: errorMapper(error),
+      };
+    }
   }
 
   getAll(params: GetAllParams): ReturnAllType {
@@ -279,6 +352,19 @@ export class SaleRepository implements ISaleRepository {
             `,
       );
 
+      const stmtPayments = db.prepare(
+        `
+        SELECT
+          *
+        FROM
+          payments
+        WHERE
+          sale_id = ?
+          AND
+          amount > 0
+        `,
+      );
+
       const stmtReturn = db.prepare(
         `
         SELECT
@@ -302,11 +388,14 @@ export class SaleRepository implements ISaleRepository {
           }
         >;
 
+        const payments = stmtPayments.all(id) as PaymentType[];
+
         const returns = stmtReturn.all(id) as ReturnsType[];
 
         return {
           sales,
           saleItems,
+          payments,
           returns,
         };
       });
@@ -321,6 +410,7 @@ export class SaleRepository implements ISaleRepository {
         data: {
           ...res.sales,
           items: res.saleItems,
+          payments: res.payments,
           returns: res.returns,
         },
         error: "",

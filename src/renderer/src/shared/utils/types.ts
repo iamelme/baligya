@@ -133,6 +133,7 @@ export type ReturnSaleType = {
   invoice_number: string;
   status: SaleType["status"];
   returns?: ReturnType[];
+  payments?: PaymentType[];
   items: Array<
     SaleItemType & {
       available_qty: number;
@@ -183,6 +184,15 @@ export type PlaceOrderType = {
   notes?: string;
   status?: SaleType["status"];
   user_id: number;
+};
+
+export type PaymentType = {
+  id: number;
+  created_at: string;
+  amount: number;
+  reference_number: string;
+  method: PaymentMethod;
+  sale_id: number;
 };
 
 export type PaymentMethod = "cash" | "card" | "e-wallet";
