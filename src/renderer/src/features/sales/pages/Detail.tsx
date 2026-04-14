@@ -19,6 +19,9 @@ import { SettingsType } from "../../../shared/utils/types";
 import Mark from "@renderer/features/salesOrders/components/Mark";
 import Pay from "../components/Pay";
 import SaleItemsRow from "../components/SaleItemsRow";
+import { PaymentParams } from "src/main/interfaces/ISaleRepository";
+import AppliedPayments from "../components/AppliedPayments";
+import CreditAndReturn from "../components/CreditAndReturn";
 const headers = [
   { label: "Name", className: "" },
   { label: "Quantity", className: "text-right" },
@@ -36,6 +39,7 @@ export default function Detail(): ReactNode {
   const navigate = useNavigate();
 
   const refReturnBtn = useRef<HTMLButtonElement | null>(null);
+  const refPayBtn = useRef<HTMLButtonElement | null>(null);
 
   const [selectedItems, setSelectedItems] = useState<
     Map<
@@ -84,6 +88,35 @@ export default function Detail(): ReactNode {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [id] });
+    },
+  });
+
+  const { mutate: mutatePayment, error: paymentError } = useMutation({
+    mutationFn: async ({
+      refNo,
+      method,
+      amount,
+    }: Omit<PaymentParams, "id">) => {
+      if (!id) {
+        throw new Error("Something went wrong!");
+      }
+
+      const { error } = await window.apiSale.pay({
+        id: Number(id),
+        refNo,
+        method,
+        amount,
+      });
+
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [id, "sales-detail"] });
+      if (refPayBtn.current) {
+        refPayBtn.current?.click();
+      }
     },
   });
 
@@ -275,23 +308,25 @@ export default function Detail(): ReactNode {
     (status) => status === data?.status,
   );
 
-  const cashRefund =
-    data?.returns?.reduce(
-      (acc, cur) => (cur.method !== "credit_memo" ? (acc += cur.amount) : 0),
-      0,
-    ) || 0;
+  // const cashRefund =
+  //   data?.returns?.reduce(
+  //     (acc, cur) => (cur.method !== "credit_memo" ? (acc += cur.amount) : 0),
+  //     0,
+  //   ) || 0;
   const creditRefund =
     data?.returns?.reduce(
       (acc, cur) => (acc += cur.method === "credit_memo" ? cur.amount : 0),
       0,
     ) || 0;
 
-  const amount = data?.amount - cashRefund;
+  const amount = data?.amount;
   const amountDue = data?.total - creditRefund - amount;
 
+  // const isBalanceDue = data?.total > amount && amount;
+
   return (
-    <div className="py-4">
-      <div className="flex justify-between">
+    <div className="flex flex-col h-[100svh] py-4">
+      <header className="shrink-0 flex justify-between">
         <div>
           <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
             Go Back
@@ -299,9 +334,16 @@ export default function Detail(): ReactNode {
         </div>
         <div className="">
           <div className="flex justify-end gap-x-2 mb-4">
-            {!isLocked && data?.status !== "complete" && (
+            {!["complete", "void", "return"].find(
+              (s) => s === data?.status,
+            ) && (
               <div>
-                <Pay />
+                <Pay
+                  ref={refPayBtn}
+                  maximumValue={data?.total - data?.amount}
+                  errorMessage={paymentError?.message}
+                  onSubmit={mutatePayment}
+                />
               </div>
             )}
             <div>
@@ -328,13 +370,28 @@ export default function Detail(): ReactNode {
                 onReturn={mutationReturn.mutate}
               />
             )}
-            {!isLocked && data?.status !== "complete" && (
-              <Button
-                variant="danger"
-                onClick={() => mutationUpdateStatus.mutate("void")}
-              >
-                <XCircle size={14} /> Void
-              </Button>
+            {!isLocked &&
+              data?.status !== "complete" &&
+              data?.status !== "partial_paid" && (
+                <Button
+                  variant="danger"
+                  onClick={() => mutationUpdateStatus.mutate("void")}
+                >
+                  <XCircle size={14} /> Void
+                </Button>
+              )}
+          </div>
+        </div>
+      </header>
+
+      <div className="flex-1 overflow-y-auto">
+        <div className="flex justify-between">
+          <div className="my-3">
+            {data?.customer_name && (
+              <>
+                <h4 className="font-medium">Customer's Name</h4>
+                <p>{data?.customer_name}</p>
+              </>
             )}
           </div>
 
@@ -349,49 +406,46 @@ export default function Detail(): ReactNode {
             </div>
           </div>
         </div>
-      </div>
-      <div className="my-3">
-        <h4 className="font-medium">Customer's Name</h4>
-        <p>{data?.customer_name}</p>
-      </div>
 
-      <div className="flex gap-x-3 my-3">
-        <Mark
-          isLocked={true}
-          billTo={data?.bill_to}
-          shipTo={data?.ship_to}
-          onChange={() => {}}
-        />
-      </div>
-      {data?.items && (
-        <>
-          <h3 className="font-medium">Line Items</h3>
-          <div className="">
-            <Items
-              items={data.items}
-              headers={headers}
-              renderItems={(item) => <SaleItemsRow key={item.id} item={item} />}
-            />
-          </div>
-        </>
-      )}
+        <div className="flex gap-x-3 my-3">
+          <Mark
+            isLocked={true}
+            billTo={data?.bill_to}
+            shipTo={data?.ship_to}
+            onChange={() => {}}
+          />
+        </div>
+        {data?.items && (
+          <>
+            <h3 className="font-medium mb-2">Line Items</h3>
+            <div className="">
+              <Items
+                items={data.items}
+                headers={headers}
+                renderItems={(item) => (
+                  <SaleItemsRow key={item.id} item={item} />
+                )}
+              />
+            </div>
+          </>
+        )}
 
-      <div className="flex justify-end">
-        <div className="flex flex-col gap-y-2 [&_dt]:text-slate-400">
-          <dl className="flex justify-between gap-x-4">
-            <dt className="">Sub Total:</dt>
-            <dd>
-              <Price value={data?.sub_total} />
-            </dd>
-          </dl>
-          <dl className="flex justify-between gap-x-4">
-            <dt className="">Discount:</dt>
-            <dd>
-              (
-              <Price value={data?.discount} />)
-            </dd>
-          </dl>
-          {/*
+        <div className="flex justify-end px-2">
+          <div className="flex flex-col gap-y-2 [&_dt]:text-slate-400">
+            <dl className="flex justify-between gap-x-4">
+              <dt className="">Sub Total:</dt>
+              <dd>
+                <Price value={data?.sub_total} />
+              </dd>
+            </dl>
+            <dl className="flex justify-between gap-x-4">
+              <dt className="">Discount:</dt>
+              <dd>
+                (
+                <Price value={data?.discount} />)
+              </dd>
+            </dl>
+            {/*
           <dl className="flex justify-between gap-x-4">
             <dt className="">Vat Sales:</dt>
             <dd>
@@ -405,37 +459,27 @@ export default function Detail(): ReactNode {
             </dd>
           </dl>
             */}
-          <dl className="flex justify-between gap-x-4 font-bold">
-            <dt className="">Total:</dt>
-            <dd>
-              <Price value={data?.total} />
-            </dd>
-          </dl>
-          <dl className="flex justify-between gap-x-4 ">
-            <dt className="">Paid Amount:</dt>
-            <dd>
-              <Price value={data?.amount} />
-            </dd>
-          </dl>
-          {data?.returns?.map((r) => (
-            <dl key={r.id} className="flex justify-between gap-x-4">
-              <dt className="">
-                {r?.method === "credit_memo" ? "Credit" : "Refund"} Amount:
-              </dt>
+            <dl className="flex justify-between gap-x-4 font-bold">
+              <dt className="">Total:</dt>
               <dd>
-                (
-                <Price value={r.amount} />)
+                <Price value={data?.total} />
               </dd>
             </dl>
-          ))}
-
-          <dl className="flex justify-between gap-x-4 border-t border-b my-3 py-3">
-            <dt className="">Change Due:</dt>
-            <dd>
-              <Price value={amountDue} />
-            </dd>
-          </dl>
+          </div>
         </div>
+
+        <div className="my-3">
+          <h3 className="font-medium mb-2">Applied Payments</h3>
+          <AppliedPayments items={data?.payments} />
+          <CreditAndReturn items={data?.returns} />
+        </div>
+
+        <dl className="flex justify-end gap-x-4  my-3 py-3 text-xl">
+          <dt className="">Amount Due:</dt>
+          <dd>
+            <Price value={amountDue} />
+          </dd>
+        </dl>
       </div>
     </div>
   );

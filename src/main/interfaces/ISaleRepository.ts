@@ -1,5 +1,6 @@
 import {
   ErrorType,
+  PaymentMethod,
   PlaceOrderType,
   ReturnRevenueType,
   ReturnSaleType,
@@ -10,6 +11,13 @@ import {
 export type ReturnType = {
   data: ReturnSaleType | null;
   error: ErrorType;
+};
+
+export type PaymentParams = {
+  id: number;
+  amount: number;
+  refNo: string;
+  method: PaymentMethod;
 };
 
 export type SaleItem = {
@@ -109,4 +117,8 @@ export interface ISaleRepository {
     error: ErrorType;
   };
   deleteAllItems(saleId: number): { success: boolean; error: ErrorType };
+  pay(params: PaymentParams): {
+    success: boolean;
+    error: ErrorType;
+  };
 }
