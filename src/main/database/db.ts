@@ -29,6 +29,12 @@ export class AppDatabase {
       `
 
 
+CREATE TABLE IF NOT EXISTS settings (
+  key PRIMARY KEY,
+  value TEXT
+);
+
+
             CREATE TABLE IF NOT EXISTS users(
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
