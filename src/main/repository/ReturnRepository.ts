@@ -183,7 +183,7 @@ export class ReturnRepository implements IReturnRepository {
         // complete
         resInserReturn = insertReturn.run(
           createdAt,
-          totalReturnAmount,
+          totalReturnAmount - returnAmount,
           "cash",
           sale_id,
           user_id,
