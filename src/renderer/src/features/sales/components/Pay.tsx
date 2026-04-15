@@ -22,6 +22,8 @@ export default function Pay({
   const [value, setValue] = useState(0);
   // const [refNo, setRefNo] = useState("");
   // const [method, setMethod] = useState<PaymentParams["method"]>("cash");
+  //
+  const normalizeMaxVal = (maximumValue || 0) / 100;
 
   return (
     <>
@@ -36,14 +38,16 @@ export default function Pay({
               customInput={Input}
               isAllowed={(values) => {
                 const { floatValue } = values;
-                return floatValue === undefined || floatValue <= maximumValue;
+                return (
+                  floatValue === undefined || floatValue <= normalizeMaxVal
+                );
               }}
               onValueChange={(values) => {
                 const { floatValue } = values;
 
                 if (floatValue) {
-                  if (floatValue > maximumValue) {
-                    setValue(maximumValue);
+                  if (floatValue > normalizeMaxVal) {
+                    setValue(normalizeMaxVal);
                     return;
                   }
                   setValue(floatValue);
@@ -64,7 +68,7 @@ export default function Pay({
                 onSubmit({ amount: value, refNo: "", method: "cash" })
               }
             >
-              Payment
+              Pay
             </Button>
           </Dialog.Footer>
         </Dialog.Content>
