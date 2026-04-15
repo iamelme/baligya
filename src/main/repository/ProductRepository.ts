@@ -72,11 +72,25 @@ export class ProductRepository implements IProductRepository {
           p.*,
           i.id AS inventory_id,
           i.quantity,
+          COALESCE((i.quantity - COALESCE(ir.quantity, 0)), 0) AS available,
           c.name as category_name
         FROM
           products AS p
         LEFT JOIN
           categories as c ON p.category_id = c.id
+        LEFT JOIN (
+          SELECT
+            product_id,
+            SUM(quantity) AS quantity
+          FROM
+            inventory_reservation
+          WHERE
+            status = 'active'
+          GROUP BY
+            product_id
+        ) AS ir
+        ON
+          ir.product_id = p.id
         LEFT JOIN
           inventory as i ON p.id = i.product_id
         LIMIT :limit
@@ -309,6 +323,8 @@ export class ProductRepository implements IProductRepository {
             p.code,
             p.cost,
             p.price,
+            p.unit,
+            p.is_active,
             c.name AS category_name,
             i.quantity,
             COALESCE((i.quantity - COALESCE(ir.quantity, 0)), 0) AS available,
@@ -380,12 +396,21 @@ export class ProductRepository implements IProductRepository {
   }
 
   create(params: Omit<ProductType, "id">): CustomResponseType {
-    const { name, sku, description, price, code, cost, category_id, user_id } =
-      params;
+    const {
+      name,
+      sku,
+      description,
+      price,
+      code,
+      cost,
+      unit,
+      category_id,
+      user_id,
+    } = params;
 
     const normalizePrice = (price ?? 0) * 100;
     const normalizeCost = (cost ?? 0) * 100;
-    const normalizeSKU = sku?.trim()?.toLowerCase()?.replace(/ /g, "-");
+    const normalizeSKU = sku?.trim()?.toUpperCase()?.replace(/ /g, "-");
 
     console.log("params", params);
 
@@ -398,9 +423,9 @@ export class ProductRepository implements IProductRepository {
         `
         INSERT INTO
           products
-          (name, sku, description, price, code, cost, user_id, category_id)
+          (name, sku, description, price, code, cost, unit, user_id, category_id)
         VALUES
-          (?, ?, ?, ?, ?, ?, ?, ?)
+          (?, ?, ?, ?, ?, ?, ?, ?, ?)
         RETURNING *
       `,
       );
@@ -422,6 +447,7 @@ export class ProductRepository implements IProductRepository {
           normalizePrice,
           code,
           normalizeCost,
+          unit,
           user_id,
           category_id,
         ) as ProductType;
