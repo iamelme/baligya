@@ -12,6 +12,7 @@ export function mapper(
   const base = {
     product_id: item.id,
     product_name: item.name,
+    product_unit: item.unit,
     product_desc: item.description ?? "",
     quantity: 1,
     unit_cost: item.cost,
