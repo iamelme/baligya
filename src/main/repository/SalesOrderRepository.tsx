@@ -695,6 +695,7 @@ export class SalesOrderRepository implements ISalesOrderRepository {
           soi.*,
           p.name AS product_name,
           p.description AS product_desc,
+          p.unit AS product_unit,
           COALESCE((i.quantity - COALESCE(ir.quantity, 0)), 0) + soi.quantity AS available
         FROM
           sales_order_items AS soi
@@ -731,6 +732,7 @@ export class SalesOrderRepository implements ISalesOrderRepository {
 
         const salesOrderItems = stmtItems.all(id) as Array<
           SalesOrderItemType & {
+            product_unit: string;
             product_name: string;
             product_desc: string;
             available: number;
