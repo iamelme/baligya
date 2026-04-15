@@ -28,6 +28,7 @@ export default function ProductDetailForm({
       <FormInput label="Description" name="description" />
       <FormInput label="Price" name="price" required />
       <FormInput label="Cost" name="cost" required />
+      <FormInput label="Unit" name="unit" required />
       <FormCombobox
         label="Category"
         name="category_id"

@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS settings (
                 price INTEGER DEFAULT 0,
                 code INTEGER UNIQUE DEFAULT 0,
                 cost INTEGER DEFAULT 0,
+                unit TEXT DEFAULT 'pc',
                 is_active INTEGER DEFAULT 1,
                 category_id INTEGER,
                 user_id INTEGER,

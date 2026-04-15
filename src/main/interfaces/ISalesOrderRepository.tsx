@@ -33,6 +33,7 @@ export type ReturnSalesOrderType = {
         customer_name?: string;
         items: Array<
           SalesOrderItemType & {
+            product_unit: string;
             product_name: string;
             product_desc: string;
             available: number;

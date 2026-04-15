@@ -24,6 +24,7 @@ export type ProductType = {
   price: number;
   cost: number;
   code: number;
+  unit: string;
   quantity: number;
   is_active: number;
   user_id: number | null;
@@ -115,6 +116,7 @@ export type SaleItemType = {
   name: string;
   sku: string;
   code: number;
+  unit: string;
   price: number;
   unit_price: number;
   unit_cost: number;

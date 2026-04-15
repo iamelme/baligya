@@ -16,6 +16,7 @@ export default function SaleItemsRow({ item }: Props): ReactNode {
           {item.code}
         </Link>
       </td>
+      <td className="">{item.unit}</td>
       <td className="text-right">{item.quantity}</td>
       <td className="text-right">{item.return_qty}</td>
       <td className="text-right">

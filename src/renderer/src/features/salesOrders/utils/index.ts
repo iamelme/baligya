@@ -71,6 +71,7 @@ export const headers = [
   { label: "Product", className: "" },
   { label: "Desc", className: "" },
   { label: "QTY", className: "" },
+  { label: "Unit", className: "" },
   { label: "Unit cost", className: "text-right" },
   { label: "Unit price", className: "text-right" },
   { label: "Discount", className: "text-right" },

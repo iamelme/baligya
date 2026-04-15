@@ -24,6 +24,7 @@ import AppliedPayments from "../components/AppliedPayments";
 import CreditAndReturn from "../components/CreditAndReturn";
 const headers = [
   { label: "Name", className: "" },
+  { label: "Unit", className: "" },
   { label: "Quantity", className: "text-right" },
   { label: "Returned", className: "text-right" },
   { label: "Unit Cost", className: "text-right" },

@@ -59,6 +59,7 @@ export default function SalesOrderItemsRow({
           />
         )}
       </td>
+      <td>{item.product_unit}</td>
       <td className="text-right">
         <Price value={item.unit_cost} />
       </td>

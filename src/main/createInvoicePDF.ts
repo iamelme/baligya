@@ -169,10 +169,11 @@ export default function createPDF(
     (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable
       .finalY + 10;
 
-  const tHeaders = ["Name", "Quantity", "Unit Price", "Total"];
+  const tHeaders = ["Name", "Unit", "Quantity", "Unit Price", "Total"];
 
   const tData = items.map((item) => [
     item.name,
+    String(item.unit),
     String(item.quantity),
     String(item.unit_price / 100),
     String(item.line_total / 100),

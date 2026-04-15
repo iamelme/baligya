@@ -333,6 +333,7 @@ export class SaleRepository implements ISaleRepository {
               si.*,
               p.name,
               p.code,
+              p.unit,
               i.id AS inventory_id,
               i.quantity AS inventory_qty,
               SUM(COALESCE(ri.quantity, 0)) AS return_qty,
