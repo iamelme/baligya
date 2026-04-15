@@ -31,6 +31,7 @@ const headers = [
   { label: "Category", className: "" },
   { label: "Unit", className: "" },
   { label: "Qty", className: "" },
+  { label: "Available", className: "" },
   { label: "Price", className: "text-right" },
   { label: "Status" },
   { label: "", className: "text-right" },
@@ -137,6 +138,7 @@ export default function ProductPage(): React.JSX.Element {
                       </td>
                       <td className="">{item.unit}</td>
                       <td className="">{item.quantity}</td>
+                      <td className="">{item.available}</td>
                       <td className="text-right">
                         <Price value={item.price} />
                       </td>
