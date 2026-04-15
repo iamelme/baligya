@@ -11,10 +11,7 @@ export default function SaleItemsRow({ item }: Props): ReactNode {
   return (
     <>
       <td>
-        <Link to={`/products/${item.product_id}`}>
-          {item.name}
-          {item.code}
-        </Link>
+        <Link to={`/products/${item.product_id}`}>{item.name}</Link>
       </td>
       <td className="">{item.unit}</td>
       <td className="text-right">{item.quantity}</td>
