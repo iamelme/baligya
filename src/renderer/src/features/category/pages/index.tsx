@@ -19,6 +19,7 @@ const Action = (): React.JSX.Element => (
 );
 
 const headers = [
+  { label: "ID", className: "" },
   { label: "Name", className: "" },
   { label: "", className: "text-right" },
 ];
@@ -74,6 +75,9 @@ export default function CategoryPage(): React.JSX.Element {
               items={data.results}
               renderItems={(item) => (
                 <>
+                  <td>
+                    <Link to={`/categories/${item.id}`}>{item.id}</Link>
+                  </td>
                   <td>
                     <Link to={`/categories/${item.id}`}>{item.name}</Link>
                   </td>
