@@ -15,9 +15,10 @@ const headers = [
   { label: "SKU", className: "" },
   { label: "Code", className: "" },
   { label: "Category", className: "" },
-  { label: "Qty", className: "" },
+  { label: "Qty", className: "text-right" },
+  { label: "Available", className: "text-right" },
   { label: "Price", className: "text-right" },
-  { label: "", className: "text-right" },
+  { label: "Status", className: "" },
 ];
 
 export default function InventoryPage(): React.JSX.Element {
@@ -107,7 +108,8 @@ export default function InventoryPage(): React.JSX.Element {
                           {item.category_name}
                         </Link>
                       </td>
-                      <td className="">{item.quantity}</td>
+                      <td className="text-right">{item.quantity}</td>
+                      <td className="text-right">{item.available}</td>
                       <td className="text-right">
                         <Price value={item.price} />
                       </td>
