@@ -7,6 +7,7 @@ import {
   LogOut,
   PieChart,
   Settings,
+  ShoppingBag,
   ShoppingCart,
   TrendingUp,
   Users,
@@ -26,7 +27,7 @@ const menu = [
   {
     label: "Orders",
     to: "/so",
-    icon: <ShoppingCart size={14} />,
+    icon: <ShoppingBag size={14} />,
   },
   {
     label: "Sales Log",
@@ -55,7 +56,7 @@ const menu = [
     icon: <DollarSign size={14} />,
   },
   {
-    label: "Stock",
+    label: "Inventory",
     to: `/inventory`,
     icon: <Database size={14} />,
   },
