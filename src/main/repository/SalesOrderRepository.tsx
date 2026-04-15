@@ -201,6 +201,9 @@ export class SalesOrderRepository implements ISalesOrderRepository {
 
   update(params: UpdateSalesOrderParams): {
     success: boolean;
+    data?: {
+      id: number;
+    };
     error: Error | string;
   } {
     const {
@@ -342,7 +345,10 @@ export class SalesOrderRepository implements ISalesOrderRepository {
           //     "Something went wrong while updating the sales order",
           //   );
           // }
-          return true;
+          return {
+            success: true,
+            id: null,
+          };
         }
 
         if (status !== "cancelled") {
@@ -415,7 +421,7 @@ export class SalesOrderRepository implements ISalesOrderRepository {
               status: "unpaid" as const,
             };
 
-            const { error } = this._sales.placeOrder(payload);
+            const { data, error } = this._sales.placeOrder(payload);
 
             if (error instanceof Error) {
               throw new Error(error.message);
@@ -437,10 +443,23 @@ export class SalesOrderRepository implements ISalesOrderRepository {
                 sales_order_id: id,
               });
             }
-            return true;
+
+            if (!data) {
+              throw new Error(
+                "Something went wrong while updating the sales order",
+              );
+            }
+
+            return {
+              success: true,
+              id: data.id,
+            };
           }
 
-          return true;
+          return {
+            success: true,
+            id: null,
+          };
         }
 
         if (status === "cancelled") {
@@ -461,7 +480,10 @@ export class SalesOrderRepository implements ISalesOrderRepository {
             });
           }
 
-          return true;
+          return {
+            success: true,
+            id: null,
+          };
         }
 
         const salesOrder = stmtSalesOrder.run({
@@ -550,13 +572,26 @@ export class SalesOrderRepository implements ISalesOrderRepository {
           }
         }
 
-        return true;
+        return {
+          success: true,
+          id: null,
+        };
       });
 
       const res = transaction();
 
-      if (!res) {
+      if (!res?.success) {
         throw new Error("Something went wrong while updating the sales order");
+      }
+
+      if (res?.id) {
+        return {
+          success: true,
+          data: {
+            id: res.id,
+          },
+          error: "",
+        };
       }
 
       return {
@@ -829,6 +864,9 @@ export class SalesOrderRepository implements ISalesOrderRepository {
 
   create(params: CreateSalesOrderParams): {
     success: boolean;
+    data?: {
+      id: number;
+    };
     error: Error | string;
   } {
     const {
@@ -931,7 +969,7 @@ export class SalesOrderRepository implements ISalesOrderRepository {
             );
           }
         }
-        return true;
+        return salesOrder.lastInsertRowid;
       });
 
       const res = transaction();
@@ -942,6 +980,9 @@ export class SalesOrderRepository implements ISalesOrderRepository {
 
       return {
         success: true,
+        data: {
+          id: Number(res),
+        },
         error: "",
       };
     } catch (error) {

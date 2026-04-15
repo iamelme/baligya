@@ -63,11 +63,17 @@ export type ReturnAllSalesOrderItemType = {
 export interface ISalesOrderRepository {
   create(params: CreateSalesOrderParams): {
     success: boolean;
+    data?: {
+      id: number;
+    };
     error: Error | string;
   };
 
   update(params: UpdateSalesOrderParams): {
     success: boolean;
+    data?: {
+      id: number;
+    };
     error: Error | string;
   };
 

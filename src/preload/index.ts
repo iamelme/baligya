@@ -305,12 +305,18 @@ export const apiSettings = {
 export const apiSalesOrder = {
   create: (
     params: CreateSalesOrderParams,
-  ): Promise<{ success: boolean; error: Error | string }> =>
-    ipcRenderer.invoke("salesOrder:create", params),
+  ): Promise<{
+    success: boolean;
+    data?: { id: number };
+    error: Error | string;
+  }> => ipcRenderer.invoke("salesOrder:create", params),
   update: (
     params: UpdateSalesOrderParams,
-  ): Promise<{ success: boolean; error: Error | string }> =>
-    ipcRenderer.invoke("salesOrder:update", params),
+  ): Promise<{
+    success: boolean;
+    data?: { id: number };
+    error: Error | string;
+  }> => ipcRenderer.invoke("salesOrder:update", params),
   getAll: (params: GetAllSalesOrderParams): Promise<ReturnAllSalesOrderType> =>
     ipcRenderer.invoke("salesOrder:getAll", params),
   getById: (id: number): Promise<ReturnSalesOrderType> =>
