@@ -12,14 +12,14 @@ export default function ResultItems({ items, onAddItem }: Props): ReactNode {
     <>
       {items?.map((item) => (
         <div key={item.id} className="flex justify-between">
-          <p>
+          <p className={`${item.is_active ? "" : "line-through"}`}>
             {item.name} {item.category_name} - <strong>Available:</strong>
             {item.available}
           </p>
           <Button
             variant="outline"
             size="xs"
-            disabled={item.available < 1}
+            disabled={item.available < 1 || !item.is_active}
             onClick={() => onAddItem(item)}
           >
             {" "}
