@@ -2,19 +2,49 @@ import Items from "@renderer/shared/components/Items";
 import ListPage from "@renderer/shared/components/ListPage";
 import Pagination2 from "@renderer/shared/components/Pagination2";
 import Button from "@renderer/shared/components/ui/Button";
+import { csvDownload } from "@renderer/shared/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { PlusCircle, Trash2 } from "react-feather";
+import { Download, PlusCircle, Trash2, Upload } from "react-feather";
 import { Link, useSearchParams } from "react-router-dom";
+import { toast } from "react-toastify";
 
-const Action = (): React.JSX.Element => (
-  <div className="flex justify-end">
+const Action = ({
+  onHandleCSV,
+}: {
+  onHandleCSV: () => void;
+}): React.JSX.Element => (
+  <div className="flex justify-end gap-x-3">
     <Link to="/categories/new">
       <Button>
         <PlusCircle size={14} />
         Add
       </Button>
     </Link>
+
+    <Button
+      variant="outline"
+      size="sm"
+      title="Download CSV"
+      onClick={() =>
+        csvDownload({
+          header: ["name"],
+          data: [],
+          title: `category-upload-template`,
+        })
+      }
+    >
+      <Download size={14} /> Download Template
+    </Button>
+
+    <Button
+      variant="outline"
+      size="sm"
+      title="Upload CSV"
+      onClick={() => onHandleCSV()}
+    >
+      <Upload size={14} /> Upload CSV
+    </Button>
   </div>
 );
 
@@ -56,6 +86,25 @@ export default function CategoryPage(): React.JSX.Element {
     mutation.mutate(id);
   };
 
+  const handleUploadCSV = async () => {
+    try {
+      const { error } = await window.apiElectron.uploadCSV({
+        stmt: `
+          INSERT INTO categories (name)
+          VALUES(:name)
+        `,
+      });
+
+      if (error instanceof Error) {
+        toast.error(error.message);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    } catch (error) {
+      toast.error("Something went wrong.");
+    }
+  };
+
   return (
     <ListPage
       header={{
@@ -63,7 +112,7 @@ export default function CategoryPage(): React.JSX.Element {
           title: "Categories",
           subTitle: "All Product Categories",
         },
-        right: <Action />,
+        right: <Action onHandleCSV={handleUploadCSV} />,
       }}
       isPending={isPending}
       error={error}

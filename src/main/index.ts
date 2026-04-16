@@ -26,6 +26,7 @@ import uploadBackup from "./uploadBackup";
 import printInvoicePDF from "./printInvoicePDF";
 import CustomerRepository from "./repository/CustomerRepository";
 import { SalesOrderRepository } from "./repository/SalesOrderRepository";
+import uploadCSV from "./uploadCSV";
 
 function createWindow(): void {
   // Create the browser window.
@@ -129,6 +130,10 @@ app.whenReady().then(() => {
     (_, params: { arrayBuffer: ArrayBuffer; isSilent?: boolean }) => {
       printInvoicePDF(params);
     },
+  );
+
+  ipcMain.handle("upload-csv", (_, params: { stmt: string }) =>
+    uploadCSV(params),
   );
 
   ipcMain.handle("hash-password", async (_, password: string) => {

@@ -6,21 +6,51 @@ import Price from "@renderer/shared/components/ui/Price";
 import useBoundStore from "@renderer/shared/stores//boundStore";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { PlusCircle, Trash2 } from "react-feather";
+import { Download, PlusCircle, Trash2, Upload } from "react-feather";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import useProductsFetch from "../hooks/useProductsFetch";
 import useDebounce from "@renderer/shared/hooks/useDebounce";
 import Pagination2 from "@renderer/shared/components/Pagination2";
 import Badge from "@renderer/shared/components/ui/Badge";
+import { csvDownload } from "@renderer/shared/utils";
+import { toast } from "react-toastify";
 
-const Action = (): React.JSX.Element => (
-  <div className="flex justify-end">
+const Action = ({
+  onHandleCSV,
+}: {
+  onHandleCSV: () => void;
+}): React.JSX.Element => (
+  <div className="flex justify-end gap-x-3">
     <Link to="/products/new" tabIndex={-1}>
       <Button variant="default">
         <PlusCircle size={14} />
         Add
       </Button>
     </Link>
+
+    <Button
+      variant="outline"
+      size="sm"
+      title="Download CSV"
+      onClick={() =>
+        csvDownload({
+          header: ["name", "sku", "unit", "description", "cost", "price"],
+          data: [],
+          title: `product-upload-template`,
+        })
+      }
+    >
+      <Download size={14} /> Download Template
+    </Button>
+
+    <Button
+      variant="outline"
+      size="sm"
+      title="Upload CSV"
+      onClick={() => onHandleCSV()}
+    >
+      <Upload size={14} /> Upload CSV
+    </Button>
   </div>
 );
 
@@ -87,6 +117,25 @@ export default function ProductPage(): React.JSX.Element {
     },
   });
 
+  const handleUploadCSV = async () => {
+    try {
+      const { error } = await window.apiElectron.uploadCSV({
+        stmt: `
+          INSERT INTO products (name, sku, unit, description, code, cost, price, category_id, user_id)
+          VALUES(:name, :sku, :unit, :description, :code, :cost, :price, :category_id, ${user.id})
+        `,
+      });
+
+      if (error instanceof Error) {
+        toast.error(error.message);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    } catch (error) {
+      toast.error("Something went wrong.");
+    }
+  };
+
   return (
     <>
       <ListPage
@@ -96,15 +145,20 @@ export default function ProductPage(): React.JSX.Element {
             subTitle: "All products",
           },
           right: (
-            <div className="flex gap-x-2">
-              <Input
-                placeholder="Search a product..."
-                autoFocus
-                defaultValue={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <Action />
-            </div>
+            <>
+              <div className="flex gap-x-2 mb-3">
+                <Input
+                  placeholder="Search a product..."
+                  autoFocus
+                  defaultValue={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+
+              <div className="flex justify-end gap-x-2">
+                <Action onHandleCSV={handleUploadCSV} />
+              </div>
+            </>
           ),
         }}
         isPending={isPending}

@@ -45,6 +45,8 @@ import {
   UpdateSalesOrderParams,
 } from "src/main/interfaces/ISalesOrderRepository";
 import { PaymentParams } from "src/main/interfaces/ISaleRepository";
+import uploadCSV from "src/main/uploadCSV";
+import { AppDatabase } from "src/main/database/db";
 
 // type ProdInventoryType = {
 //   id: number
@@ -352,6 +354,10 @@ export const apiElectron = {
     arrayBuffer: ArrayBuffer;
     isSilent?: boolean;
   }): Promise<void> => ipcRenderer.invoke("print-pdf", params),
+  uploadCSV: (params: {
+    stmt: string;
+  }): Promise<{ success: boolean; error?: Error }> =>
+    ipcRenderer.invoke("upload-csv", params),
   hashPassword: (password: string): Promise<string | boolean> =>
     ipcRenderer.invoke("hash-password", password),
   verifyPassword: (params: {
