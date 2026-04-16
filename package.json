@@ -20,7 +20,34 @@
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux",
     "rebuild": "electron-rebuild -f -w better-sqlite3",
+    "package": "npm run build && electron-builder",
+    "release": "npm run build && electron-builder --publish always",
     "test": "vitest"
+  },
+  "build": {
+    "appId": "com.elme.cute",
+    "productName": "Baligya",
+    "directories": {
+      "buildResources": "resources",
+      "output": "dist"
+    },
+    "files": [
+      "out/**/*"
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "iamelme",
+      "repo": "https://github.com/iamelme/baligya"
+    },
+    "mac": {
+      "target": ["dmg", "zip"]
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
