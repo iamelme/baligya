@@ -17,7 +17,9 @@ const headers = [
   { label: "Category", className: "" },
   { label: "Qty", className: "text-right" },
   { label: "Available", className: "text-right" },
+  { label: "cost", className: "text-right" },
   { label: "Price", className: "text-right" },
+  { label: "Gross Revenue", className: "text-right" },
   { label: "Status", className: "" },
 ];
 
@@ -111,7 +113,13 @@ export default function InventoryPage(): React.JSX.Element {
                       <td className="text-right">{item.quantity}</td>
                       <td className="text-right">{item.available}</td>
                       <td className="text-right">
+                        <Price value={item.cost} />
+                      </td>
+                      <td className="text-right">
                         <Price value={item.price} />
+                      </td>
+                      <td className="text-right">
+                        <Price value={item.quantity * item.price} />
                       </td>
                       <td className="">
                         <Badge variant={isActive ? "success" : "danger"}>
