@@ -1,7 +1,10 @@
 name: Build Windows App
 
 on:
-  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
 jobs:
   build-windows:
     runs-on: windows-latest
