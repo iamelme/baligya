@@ -1,5 +1,4 @@
 name: Build Windows App
-
 on:
   push:
     tags:
@@ -7,12 +6,10 @@ on:
 
 permissions:
   contents: write
-  pull-requests: read
 
 jobs:
   build-windows:
     runs-on: windows-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -20,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 25
+          node-version: 20
           cache: 'npm'
 
       - name: Install dependencies
@@ -28,21 +25,9 @@ jobs:
 
       - name: Rebuild native modules for Windows
         run: npx electron-rebuild -f -w better-sqlite3
-        env:
-          npm_config_platform: win32
-          npm_config_arch: x64
 
       - name: Build Windows app
         run: npm run build:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload .exe installer
-        uses: actions/upload-artifact@v4
-        with:
-          name: baligya-app-windows
-          path: |
-            dist/*.exe
-            dist/*.msi
-          if-no-files-found: warn
-          retention-days: 7
