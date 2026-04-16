@@ -45,8 +45,6 @@ import {
   UpdateSalesOrderParams,
 } from "src/main/interfaces/ISalesOrderRepository";
 import { PaymentParams } from "src/main/interfaces/ISaleRepository";
-import uploadCSV from "src/main/uploadCSV";
-import { AppDatabase } from "src/main/database/db";
 
 // type ProdInventoryType = {
 //   id: number

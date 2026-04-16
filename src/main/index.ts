@@ -1,6 +1,9 @@
 import { app, shell, BrowserWindow, ipcMain, protocol, net } from "electron";
 import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
+import { autoUpdater } from "electron-updater";
+
+``;
 import icon from "../../resources/icon.png?asset";
 import { AppDatabase } from "./database/db";
 import { CategoryRepository } from "./repository/CategoryRepository";
@@ -83,6 +86,8 @@ app.whenReady().then(() => {
     // Serve a file from your application directory
     // return net.fetch(url.pathToFileURL(path.resolve(__dirname, filePath)).toString())
   });
+
+  autoUpdater.checkForUpdatesAndNotify();
 
   electronApp.setAppUserModelId("com.electron");
 
