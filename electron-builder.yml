@@ -11,6 +11,11 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
+extraResources:
+  - from: ./resources/migrations
+    to: migrations
+    filter:
+      - '**/*.sql'
 win:
   executableName: baligya-app
 nsis:

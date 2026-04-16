@@ -2,13 +2,17 @@ import fs from "fs";
 import { readdir, readFile } from "fs/promises";
 import { join } from "path";
 import { AppDatabase } from "./database/db";
+import { app } from "electron";
 
 export default function runMigration(db: AppDatabase) {
-  const dir = join(process.cwd(), "./src/main/migrations");
+  console.log("run migration...");
+  const isDev = !app.isPackaged;
+
+  const dir = isDev
+    ? join(process.cwd(), "resources/migrations") // dev: project root
+    : join(process.resourcesPath, "migrations");
   // console.log("env", process.env.NODE_ENV);
   // console.log("cwd", process.cwd());
-  //
-  // console.log({ dir });
 
   db.getDb().exec(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
