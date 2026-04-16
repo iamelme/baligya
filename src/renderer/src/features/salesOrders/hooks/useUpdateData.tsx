@@ -12,6 +12,7 @@ type Params = {
 export type SalesOrderWithItems = SalesOrderType & {
   items: Array<
     SalesOrderItemType & {
+      product_unit: string;
       product_name: string;
       product_desc: string;
       available: number;
