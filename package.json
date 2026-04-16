@@ -25,7 +25,7 @@
     "test": "vitest"
   },
   "build": {
-    "appId": "com.elme.cute",
+    "appId": "io.github.iamelme.baligya",
     "productName": "Baligya",
     "directories": {
       "buildResources": "resources",
@@ -40,7 +40,10 @@
       "repo": "https://github.com/iamelme/baligya"
     },
     "mac": {
-      "target": ["dmg", "zip"]
+      "target": [
+        "dmg",
+        "zip"
+      ]
     },
     "win": {
       "target": "nsis"
@@ -62,6 +65,7 @@
     "csv-parser": "^3.2.0",
     "dayjs": "^1.11.20",
     "electron-router-dom": "^2.1.0",
+    "electron-updater": "^6.8.3",
     "feather-icons": "^4.29.2",
     "image-size": "^2.0.2",
     "immer": "^11.0.1",

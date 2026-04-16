@@ -3,7 +3,6 @@ import { join } from "path";
 import { electronApp, optimizer, is } from "@electron-toolkit/utils";
 import { autoUpdater } from "electron-updater";
 
-``;
 import icon from "../../resources/icon.png?asset";
 import { AppDatabase } from "./database/db";
 import { CategoryRepository } from "./repository/CategoryRepository";
