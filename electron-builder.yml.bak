@@ -1,8 +1,11 @@
-appId: com.electron.app
-productName: baligya-app
+appId: io.github.iamelme.baligya
+productName: Baligya
 directories:
+  output: dist
   buildResources: build
 files:
+  - filter:
+      - out/**/*
   - '!**/.vscode/*'
   - '!src/*'
   - '!electron.vite.config.{js,ts,mjs,cjs}'
@@ -12,10 +15,8 @@ files:
 asarUnpack:
   - resources/**
 extraResources:
-  - from: ./resources/migrations
+  - from: ./migrations
     to: migrations
-    filter:
-      - '**/*.sql'
 win:
   executableName: baligya-app
 nsis:
@@ -44,5 +45,6 @@ appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
 publish:
-  provider: generic
-  url: https://example.com/auto-updates
+  provider: github
+  owner: iamelme
+  repo: baligya

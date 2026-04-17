@@ -9,7 +9,7 @@ export default function runMigration(db: AppDatabase) {
   const isDev = !app.isPackaged;
 
   const dir = isDev
-    ? join(process.cwd(), "resources/migrations") // dev: project root
+    ? join(process.cwd(), "migrations") // dev: project root
     : join(process.resourcesPath, "migrations");
   // console.log("env", process.env.NODE_ENV);
   // console.log("cwd", process.cwd());

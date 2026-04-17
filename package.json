@@ -34,6 +34,12 @@
     "files": [
       "out/**/*"
     ],
+    "extraResources": [
+      {
+        "from": "./migrations",
+        "to": "migrations"
+      }
+    ],
     "publish": {
       "provider": "github",
       "owner": "iamelme",
