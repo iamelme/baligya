@@ -32,12 +32,22 @@ import uploadCSV from "./uploadCSV";
 
 function createWindow(): void {
   // Create the browser window.
+  const iconExtension =
+    process.platform === "win32"
+      ? "ico"
+      : process.platform === "darwin"
+        ? "icns"
+        : "png";
+  const iconPath = app.isPackaged
+    ? join(process.resourcesPath, "icon.png")
+    : join(__dirname, "resources", `icon.${iconExtension}`);
   const mainWindow = new BrowserWindow({
     width: 1024,
     height: 670,
     show: false,
     autoHideMenuBar: true,
-    ...(process.platform === "linux" ? { icon } : {}),
+    icon: iconPath,
+    // ...(process.platform === "linux" ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),
       sandbox: false,

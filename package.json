@@ -1,6 +1,6 @@
 {
   "name": "baligya",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Easily monitor your revenue, track returns, and see your top-selling products.",
   "main": "./out/main/index.js",
   "author": "https://github.com/iamelme",
@@ -38,6 +38,11 @@
       {
         "from": "./migrations",
         "to": "migrations"
+      },
+      {
+        "from": "resources/",
+        "to": "resources/",
+        "filter": ["**/*"]
       }
     ],
     "publish": {

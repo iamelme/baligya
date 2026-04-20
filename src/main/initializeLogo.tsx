@@ -12,7 +12,9 @@ export default function initializeLogo(db: AppDatabase) {
       fs.mkdir(imagePath, { recursive: true }, (err) => {
         if (err) throw err;
 
-        const source = join(__dirname, "../../resources/icon.png");
+        const source = app.isPackaged
+          ? join(process.resourcesPath, "icon.png")
+          : join(__dirname, "resources", "icon.png");
         const dest = join(imagePath, "logo.webp");
         fs.copyFile(source, dest, (err) => {
           if (err) throw err;
