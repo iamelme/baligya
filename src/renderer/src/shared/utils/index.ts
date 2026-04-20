@@ -26,6 +26,22 @@ export function addDays(date: Date, days: number): string {
   return newDate.toISOString();
 }
 
+export function localeDate({
+  date,
+  locale = "en-PH",
+}: {
+  date: Date | string | undefined;
+  locale?: string;
+}): string {
+  if (!date || !new Date(date)) {
+    return "";
+  }
+
+  return new Date(date).toLocaleDateString(locale, {
+    timeZone: "UTC",
+  });
+}
+
 export function csvDownload<T>({
   header,
   data,

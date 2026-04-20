@@ -45,6 +45,11 @@ import {
   UpdateSalesOrderParams,
 } from "src/main/interfaces/ISalesOrderRepository";
 import { PaymentParams } from "src/main/interfaces/ISaleRepository";
+import {
+  ReturnAllParams,
+  ReturnAllType,
+  ReturnByIdType,
+} from "src/main/interfaces/IReturnRepository";
 
 // type ProdInventoryType = {
 //   id: number
@@ -182,6 +187,10 @@ export const apiSale = {
 };
 
 export const apiReturn = {
+  getAll: (params: ReturnAllParams): Promise<ReturnAllType> =>
+    ipcRenderer.invoke("return:getAll", params),
+  getById: (id: number): Promise<ReturnByIdType> =>
+    ipcRenderer.invoke("return:getById", id),
   create: (
     params: Omit<ReturnType, "id" | "created_at" | "items"> & {
       items: Array<Omit<ReturnItemType, "id" | "created_at" | "return_id">>;
