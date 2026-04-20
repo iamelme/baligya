@@ -470,7 +470,9 @@ export default function Detail(): ReactNode {
         </div>
 
         <div className="my-3">
-          <h3 className="font-medium mb-2">Applied Payments</h3>
+          <h3 className="font-medium mb-2">
+            Applied Payments & Credit/Returns
+          </h3>
           <AppliedPayments items={data?.payments} />
           <CreditAndReturn items={data?.returns} />
         </div>
