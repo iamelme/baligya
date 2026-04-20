@@ -26,6 +26,9 @@ import InventoryDetail from "../features/inventory/pages/Detail";
 import SalesPage from "../features/sales/pages";
 import SalesDetail from "../features/sales/pages/Detail";
 
+import ReturnsPage from "../features/returns/pages";
+import ReturnsDetail from "../features/returns/pages/Detail";
+
 import TopProductsPage from "../features/Reports/pages/Top";
 
 import SettingsPage from "../features/settings/pages";
@@ -83,6 +86,11 @@ export default function Router() {
           <Route path="sales">
             <Route index element={<SalesPage />} />
             <Route path=":id" element={<SalesDetail />} />
+          </Route>
+
+          <Route path="returns">
+            <Route index element={<ReturnsPage />} />
+            <Route path=":id" element={<ReturnsDetail />} />
           </Route>
 
           <Route path="reports">

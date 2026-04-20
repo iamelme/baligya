@@ -66,6 +66,11 @@ const menu = [
     icon: <TrendingUp size={14} />,
   },
   {
+    label: "Sales Return",
+    to: `/returns`,
+    icon: <TrendingUp size={14} />,
+  },
+  {
     label: "Insights",
     icon: <PieChart size={14} />,
     children: [

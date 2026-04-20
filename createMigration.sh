@@ -1,6 +1,6 @@
 ext="sql"
 n=1
-path="./src/main/migrations/"
+path="./migrations/"
 date=$(date +%Y-%m-%d)
 desc="${1:?Usage: $0 <description>}"
 

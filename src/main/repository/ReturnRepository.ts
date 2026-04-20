@@ -1,6 +1,17 @@
 import { ipcMain } from "electron";
-import { IReturnRepository, Return } from "../interfaces/IReturnRepository";
-import { ReturnType, SaleType } from "../../renderer/src/shared/utils/types";
+import {
+  IReturnRepository,
+  Return,
+  ReturnAllParams,
+  ReturnAllType,
+  ReturnByIdType,
+} from "../interfaces/IReturnRepository";
+import {
+  ProductType,
+  ReturnItemType,
+  ReturnType,
+  SaleType,
+} from "../../renderer/src/shared/utils/types";
 import { IInventoryRepository } from "../interfaces/IInventoryRepository";
 import { ISaleRepository } from "../interfaces/ISaleRepository";
 import { AppDatabase } from "../database/db";
@@ -20,9 +31,143 @@ export class ReturnRepository implements IReturnRepository {
     this._database = database;
     this._inventory = inventory;
     this._sales = sales;
+    ipcMain.handle("return:getAll", (_, params: ReturnAllParams) =>
+      this.getAll(params),
+    );
+    ipcMain.handle("return:getById", (_, id: number) => this.getById(id));
     ipcMain.handle("return:create", (_, params: ReturnType) =>
       this.create(params),
     );
+  }
+
+  getById(id: number): ReturnByIdType {
+    try {
+      const db = this._database.getDb();
+
+      const stmt = db.prepare(
+        `
+        SELECT
+          r.*,
+          s.invoice_number
+        FROM
+          returns AS r
+        LEFT JOIN
+          sales AS s
+        ON
+          s.id = r.sale_id
+        WHERE
+          r.id = ?
+        `,
+      );
+
+      const stmtItems = db.prepare(
+        `
+        SELECT
+          ri.*,
+          p.name,
+          p.unit
+        FROM
+          return_items AS ri
+        LEFT JOIN
+          products AS p
+        ON
+          p.id = ri.product_id
+        WHERE
+          ri.return_id = ?
+        `,
+      );
+
+      const transaction = db.transaction(() => {
+        const returns = stmt.get(id) as ReturnType & SaleType;
+
+        const items = stmtItems.all(id) as Array<ReturnItemType & ProductType>;
+
+        return {
+          ...returns,
+          items,
+        };
+      });
+
+      const res = transaction();
+
+      if (!res) {
+        throw new Error("Something went wrong while retreiving a sales return");
+      }
+
+      return {
+        data: res,
+        error: "",
+      };
+    } catch (error) {
+      return {
+        data: null,
+        error: errorMapper(error),
+      };
+    }
+  }
+
+  getAll(params: ReturnAllParams): ReturnAllType {
+    const { pageSize, offset } = params;
+
+    try {
+      const db = this._database.getDb();
+      const stmt = db.prepare(
+        `
+        SELECT
+          *
+        FROM
+          returns
+        WHERE
+          (:startDate IS FALSE OR created_at >= :startDate )
+          AND (:endDate IS FALSE OR created_at <= :endDate )
+        LIMIT :limit
+        OFFSET :offset
+        `,
+      );
+
+      const stmtCount = db.prepare(`
+          SELECT
+            count
+          FROM
+            counter
+          WHERE
+            name = :name
+                                    `);
+
+      const transaction = db.transaction(() => {
+        const returns = stmt.all({
+          ...params,
+          limit: pageSize,
+          offset: offset ? offset * pageSize : offset,
+        }) as ReturnType[];
+
+        const total = stmtCount.get({ name: "returns" }) as { count: number };
+
+        return {
+          total: total?.count || 0,
+          results: returns,
+        };
+      });
+
+      const res = transaction();
+
+      if (!res) {
+        throw new Error("Something went wrong while retrieving returns");
+      }
+
+      return {
+        data: {
+          total: res.total,
+          results: res.results,
+        },
+        error: "",
+      };
+    } catch (error) {
+      return {
+        data: null,
+        error: errorMapper(error),
+      };
+    }
   }
 
   create(params: ReturnType): Return {
