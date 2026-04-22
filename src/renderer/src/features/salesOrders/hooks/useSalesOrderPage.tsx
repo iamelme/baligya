@@ -50,7 +50,7 @@ export default function useSalesOrderPage({ id, userId }: Params) {
 
     setErrors(null);
 
-    const res = validate(salesOrder);
+    const res = validate({ ...salesOrder, status });
 
     if (!res.success) {
       setErrors(res.errors);

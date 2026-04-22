@@ -1,18 +1,11 @@
 import { SalesOrderType } from "@renderer/shared/utils/types";
 import * as z from "zod";
 
-const schema = z.object({
+const nonDraftStatuses = ["confirmed", "fulfilled", "complete"] as const;
+
+const base = {
   id: z.coerce.number(),
   due_at: z.string().min(1, { message: "Due date is required." }),
-  status: z
-    .union([
-      z.literal("draft"),
-      z.literal("confirmed"),
-      z.literal("fulfilled"),
-      z.literal("complete"),
-      z.literal("cancelled"),
-    ])
-    .default("draft"),
   bill_to: z.string(),
   ship_to: z.string(),
   sub_total: z.number(),
@@ -22,7 +15,6 @@ const schema = z.object({
   vat_amount: z.number(),
   tax: z.number(),
   notes: z.string(),
-  customer_id: z.number("Customer is required."),
   user_id: z.number(),
   items: z
     .array(
@@ -41,7 +33,27 @@ const schema = z.object({
       { message: "At least 1 item." },
     )
     .nonempty({ message: "Please add an item." }),
-});
+};
+
+const schema = z.discriminatedUnion("status", [
+  z.object({
+    ...base,
+    status: z.literal("draft"),
+    customer_id: z.number().nullable(),
+  }),
+  z.object({
+    ...base,
+    status: z.literal("cancelled"),
+    customer_id: z.number().nullable(),
+  }),
+  ...nonDraftStatuses.map((s) =>
+    z.object({
+      ...base,
+      status: z.literal(s),
+      customer_id: z.number({ error: "Customer is required." }),
+    }),
+  ),
+]);
 
 type ValueType = z.infer<typeof schema>;
 
