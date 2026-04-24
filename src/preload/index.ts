@@ -50,6 +50,7 @@ import {
   ReturnAllType,
   ReturnByIdType,
 } from "src/main/interfaces/IReturnRepository";
+import { ProgressInfo, UpdateInfo } from "electron-updater";
 
 // type ProdInventoryType = {
 //   id: number
@@ -371,6 +372,18 @@ export const apiElectron = {
     hashedPassword: string;
     password: string;
   }): Promise<boolean> => ipcRenderer.invoke("verify-password", params),
+  onStatus: (cb: React.Dispatch<React.SetStateAction<null | string>>) =>
+    ipcRenderer.on("update-status", (_, msg) => cb?.(msg)),
+  onUpdateAvailable: (cb: (info: UpdateInfo) => void) =>
+    ipcRenderer.on("update-available", (_, info: UpdateInfo) => cb(info)),
+  onProgress: (cb: (p: ProgressInfo) => void) =>
+    ipcRenderer.on("download-progress", (_, p: ProgressInfo) => cb(p)),
+  onDownloaded: (cb: React.Dispatch<React.SetStateAction<null>>) =>
+    ipcRenderer.on("update-downloaded", (_, info) => cb(info)),
+  onError: (cb: React.Dispatch<React.SetStateAction<null>>) =>
+    ipcRenderer.on("update-error", (_, msg) => cb(msg)),
+  downloadUpdate: () => ipcRenderer.send("download-update"),
+  installUpdate: () => ipcRenderer.send("install-update"),
 };
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

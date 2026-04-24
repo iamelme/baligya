@@ -29,6 +29,9 @@ import CustomerRepository from "./repository/CustomerRepository";
 import { SalesOrderRepository } from "./repository/SalesOrderRepository";
 import uploadCSV from "./uploadCSV";
 
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = true;
+
 function createWindow(): void {
   // Create the browser window.
   const iconExtension =
@@ -61,6 +64,31 @@ function createWindow(): void {
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url);
     return { action: "deny" };
+  });
+
+  autoUpdater.on("checking-for-update", () => {
+    console.log("update-status ... checking for updates...");
+    mainWindow.webContents.send("update-status", "Checking for updates...");
+  });
+
+  autoUpdater.on("update-available", (info) => {
+    mainWindow.webContents.send("update-available", info);
+  });
+
+  autoUpdater.on("update-not-available", () => {
+    mainWindow.webContents.send("update-status", "App is up to date.");
+  });
+
+  autoUpdater.on("download-progress", (progress) => {
+    mainWindow.webContents.send("download-progress", progress);
+  });
+
+  autoUpdater.on("update-downloaded", (info) => {
+    mainWindow.webContents.send("update-downloaded", info);
+  });
+
+  autoUpdater.on("error", (err) => {
+    mainWindow.webContents.send("update-error", err.message);
   });
 
   // HMR for renderer base on electron-vite cli.
@@ -122,6 +150,14 @@ app.whenReady().then(() => {
 
   ipcMain.handle("get-locale", () => {
     return app.getLocale();
+  });
+
+  ipcMain.on("download-update", () => {
+    autoUpdater.downloadUpdate();
+  });
+
+  ipcMain.on("install-update", () => {
+    autoUpdater.quitAndInstall();
   });
 
   ipcMain.handle(

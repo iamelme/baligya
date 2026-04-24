@@ -17,6 +17,7 @@ import Button from "../../shared/components/ui/Button";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { arrKeyValueToObj } from "@renderer/shared/utils";
+import UpdateNotifier from "./UpdateNotifier";
 
 const menu = [
   {
@@ -143,6 +144,7 @@ export default function Sidebar({ onUpdateUser }: Props): React.JSX.Element {
       </div>
 
       <div className="shrink-0 bg-gray-900 py-2">
+        <UpdateNotifier />
         <Menu items={menu2} />
         <div className="px-4">
           <Button variant="outline" onClick={() => onUpdateUser()} full>
