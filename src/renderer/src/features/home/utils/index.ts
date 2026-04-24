@@ -15,12 +15,12 @@ export function monthSaleMapper({
   data,
   key,
 }: {
-  months: string[];
+  months: { long: string; numeric: number }[];
   key: Key;
   data: Data;
 }) {
-  return months.map((_, index) => {
-    const sameMonth = data.find((d) => Number(d.month) - 1 === index);
+  return months.map((m) => {
+    const sameMonth = data.find((d) => Number(d.month) === m.numeric);
 
     if (sameMonth) {
       return (sameMonth?.[key] ?? 0) / 100;

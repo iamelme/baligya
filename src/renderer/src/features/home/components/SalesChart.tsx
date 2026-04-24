@@ -70,7 +70,7 @@ export default function SalesChart(): ReactNode {
   const normalizeData = Array.isArray(data) ? data : [];
 
   const d = {
-    labels: months,
+    labels: months?.map((m) => m.long),
     datasets: [
       {
         label: "Net Sales",

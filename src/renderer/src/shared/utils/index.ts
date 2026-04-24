@@ -79,24 +79,30 @@ export const numericFormatLimit =
 export function getCurrentQuarterDates(): {
   start: Date;
   end: Date;
-  months: string[];
+  months: { long: string; numeric: number }[];
 } {
   const today = new Date();
   const currentMonth = today.getMonth();
   const currentYear = today.getFullYear();
-  const months: string[] = [];
+  const months: { long: string; numeric: number }[] = [];
 
   const quarterStartMonth = Math.floor(currentMonth / 3) * 3;
 
   const startDate = new Date(currentYear, quarterStartMonth, 1);
 
   for (let i = 1; i <= 3; i++) {
-    months.push(
-      new Date(currentYear, quarterStartMonth + i, 0).toLocaleString(
+    months.push({
+      long: new Date(currentYear, quarterStartMonth + i, 0).toLocaleString(
         "default",
         { month: "long" },
       ),
-    );
+      numeric: Number(
+        new Date(currentYear, quarterStartMonth + i, 0).toLocaleString(
+          "default",
+          { month: "numeric" },
+        ),
+      ),
+    });
   }
 
   const endDate = new Date(currentYear, quarterStartMonth + 3, 0);
